@@ -90,7 +90,7 @@ public class OI {
 	public double getDrive()
 	{
 		double x = -1 * stick1.getRawAxis(1);
-		return x;
+		return -0.5;
 	}
 
 	// Get the value of the "turn" stick.

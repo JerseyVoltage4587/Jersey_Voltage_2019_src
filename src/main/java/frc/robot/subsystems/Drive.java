@@ -8,6 +8,10 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+
 import frc.robot.util.Gyro;
 import frc.robot.util.ReflectingCSVWriter;
 
@@ -42,7 +46,8 @@ public class Drive extends Subsystem {
     public enum DriveControlState {
         OPEN_LOOP, // open loop voltage control
         PATH_FOLLOWING, // used for autonomous driving
-        TEST_MODE, // to run the testSubsystem() method once, then return to OPEN_LOOP
+		TEST_MODE, // to run the testSubsystem() method once, then return to OPEN_LOOP
+		VISION_DRIVE
     }
     public DriveControlState getState(){
     	return mDriveControlState;
@@ -97,7 +102,14 @@ public class Drive extends Subsystem {
     		mDriveControlState = DriveControlState.PATH_FOLLOWING;
     	}
     }
-    
+	
+	public void startVisionDrive() {
+    	System.out.println("in startVisionDrive");
+    	synchronized (Drive.this) {
+    		mDriveControlState = DriveControlState.VISION_DRIVE;
+    	}
+    }
+
     public void runTest() {
     	System.out.println("in runTest");
     	synchronized (Drive.this) {
@@ -141,7 +153,10 @@ public class Drive extends Subsystem {
                 case TEST_MODE:
                 	testSubsystem();
                 	mDriveControlState = DriveControlState.OPEN_LOOP;
-                	break;
+					break;
+				case VISION_DRIVE:
+					doVisionDrive();
+					break;
                 default:
                     System.out.println("Unexpected drive control state: " + mDriveControlState);
                     break;
@@ -155,7 +170,63 @@ public class Drive extends Subsystem {
             stop();
             mCSVWriter.flush();
         }
-    };
+	};
+	private double visionX, visionY;
+	private double visionDriveAverageSpeed;
+	private double distToTarget;
+
+	private void doVisionDrive(){
+		NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+		NetworkTableEntry ty = limelightTable.getEntry("ty");
+		double y = ty.getDouble(0.0);
+		distToTarget = ((27 - y) * Constants.kInchesPerVisionY) - 7;
+		SmartDashboard.putNumber("distToTarget", distToTarget);
+		
+		NetworkTableEntry tx = limelightTable.getEntry("tx");
+		double x = tx.getDouble(0.0);
+		
+		NetworkTableEntry ta = limelightTable.getEntry("ta");
+		double a = ta.getDouble(0.0);
+
+		double left = 0;
+		double right = 0;
+
+		left = (distToTarget * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);
+		right = (distToTarget * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);
+
+		if(Math.abs(x) < Constants.kVisionXTolerance){
+			if(y < Constants.kVisionYTolerance){
+				left += 0.3;
+				right += 0.3;
+			}else{
+				double desiredDist = Constants.kVisionDistToStop - ((10 - a) * 1.0);
+				if(y < desiredDist){
+					//setOpenLoop(DriveSignal.NEUTRAL);
+					left=0;
+					right=0;
+				}
+			}
+		}
+		System.out.println(left+","+right);
+		setMotorLevels(left, -right);
+	}
+
+	private void setMotorLevels(double left, double right){
+    	if(left < -1){
+    		left =-1;
+    	}
+    	if(left > 1){
+    		left = 1;
+    	}
+    	if(right < -1){
+    		right =-1;
+    	}
+    	if(right > 1){
+    		right = 1;
+    	}
+    	mLeftMaster.set(ControlMode.PercentOutput, left);
+    	mRightMaster.set(ControlMode.PercentOutput, right);
+    }
 
 	private Drive() {
         // Start all Talons in open loop mode.

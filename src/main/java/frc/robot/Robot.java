@@ -1,4 +1,7 @@
 package frc.robot;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 //GIT test
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
@@ -107,6 +110,7 @@ public class Robot extends TimedRobot {
 	public void disabledPeriodic() {
 		try {
 			SmartDashboard.putNumber("POV", OI.getInstance().getPOV());
+
 			allPeriodic();
 			setGm();
 			//System.out.println(getGm());
@@ -148,6 +152,8 @@ public class Robot extends TimedRobot {
 			CrashTracker.logAutonomousInit();
 			// Start the subsystem loops.
 			mEnabledLooper.start();
+
+			Drive.getInstance().startVisionDrive();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");
 			if ( m_autonomousInit_loggedError == false ) {

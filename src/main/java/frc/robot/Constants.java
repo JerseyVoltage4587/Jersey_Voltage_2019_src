@@ -26,6 +26,15 @@ public class Constants{
     public static final double kScaleLowArm = -185.0;
     public static final double kScaleArmFlip = -12.0;
 
+    public static final double kInchesPerVisionY = 4.273662947; // VisionY = 27 - (limelight ty output)
+    public static final double kVisionDistToMotor = 0.00125;
+    public static final double kVisionXToMotor = 0.02;
+    public static final double kVisionDistToStop = 7.0;
+    public static final double kVisionFullArea = 10.0;
+
+    public static final double kVisionXTolerance = 2.0;
+    public static final double kVisionYTolerance = 2.0;
+
     /* ROBOT PHYSICAL CONSTANTS */
 
     // Wheels
