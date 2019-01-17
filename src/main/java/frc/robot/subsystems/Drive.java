@@ -187,6 +187,8 @@ public class Drive extends Subsystem {
 		
 		NetworkTableEntry ta = limelightTable.getEntry("ta");
 		double a = ta.getDouble(0.0);
+		NetworkTableEntry tv = limelightTable.getEntry("ta");
+		double v = tv.getDouble(0.0);
 
 		double left = 0;
 		double right = 0;
@@ -195,17 +197,19 @@ public class Drive extends Subsystem {
 		right = (distToTarget * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);
 
 		if(Math.abs(x) < Constants.kVisionXTolerance){
-			if(y < Constants.kVisionYTolerance){
-				left += 0.3;
-				right += 0.3;
-			}else{
-				double desiredDist = Constants.kVisionDistToStop - ((10 - a) * 1.0);
-				if(y < desiredDist){
+			//System.out.println("x: "+x+" < XTolerance: "+Constants.kVisionXTolerance);
+			
+				double desiredDist = 1.0;//Constants.kVisionDistToStop - ((10 - a) * 0.9);
+				if(y > desiredDist){
 					//setOpenLoop(DriveSignal.NEUTRAL);
 					left=0;
 					right=0;
 				}
-			}
+			
+		}
+		if(v == 0.0){
+			left=0;
+			right=0;
 		}
 		System.out.println(left+","+right);
 		setMotorLevels(left, -right);
