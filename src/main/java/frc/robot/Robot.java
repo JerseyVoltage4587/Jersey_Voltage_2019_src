@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import java.util.Arrays;
@@ -105,10 +106,39 @@ public class Robot extends TimedRobot {
 	/**
 	 * This function is called periodically while the robot is in Disabled mode.
 	 */
+	private double convertYToDistInches(double y){
+		double hyp = (0.082178521 * y * y) + (-1.526552917 * y) + (19.84423076);
+		return Math.sqrt((hyp * hyp) + 169.0) - 12.0 + 19.0;//this is front bumper, center robot +19
+	}
+	private double convertXToTheta(double x){
+		double g = SmartDashboard.getNumber("gyro pos", -99999.0);
+		if((g+x)<0){
+			return -90 - (g+x);
+		}else if((g+x)>0){
+			return 90 - (g+x);
+		}else{
+			return 0;
+		}
+	}
+
 	private boolean m_disabledPeriodic_loggedError = false;
 	@Override
 	public void disabledPeriodic() {
 		try {
+			NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+			NetworkTableEntry ty = limelightTable.getEntry("ty");
+			double y = ty.getDouble(0.0);
+			double distToTarget = convertYToDistInches(y);
+			SmartDashboard.putNumber("distToTarget", distToTarget);
+			
+			NetworkTableEntry tx = limelightTable.getEntry("tx");
+			double x = tx.getDouble(0.0);
+			double angToTarget = convertXToTheta(x);
+			SmartDashboard.putNumber("angToTarget", angToTarget);
+
+			double TargetHorizOffset = distToTarget * Math.cos(angToTarget);
+			SmartDashboard.putNumber("TargetHorizOffset", TargetHorizOffset);
+
 			SmartDashboard.putNumber("POV", OI.getInstance().getPOV());
 
 			allPeriodic();

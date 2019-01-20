@@ -179,7 +179,7 @@ public class Drive extends Subsystem {
 		NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 		NetworkTableEntry ty = limelightTable.getEntry("ty");
 		double y = ty.getDouble(0.0);
-		distToTarget = ((27 - y) * Constants.kInchesPerVisionY) - 7;
+		distToTarget = (y * Constants.kInchesPerVisionY) - 7;
 		SmartDashboard.putNumber("distToTarget", distToTarget);
 		
 		NetworkTableEntry tx = limelightTable.getEntry("tx");
@@ -187,7 +187,7 @@ public class Drive extends Subsystem {
 		
 		NetworkTableEntry ta = limelightTable.getEntry("ta");
 		double a = ta.getDouble(0.0);
-		NetworkTableEntry tv = limelightTable.getEntry("ta");
+		NetworkTableEntry tv = limelightTable.getEntry("tv");
 		double v = tv.getDouble(0.0);
 
 		double left = 0;
