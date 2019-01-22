@@ -27,6 +27,7 @@ public class Constants{
     public static final double kScaleArmFlip = -12.0;
 
     public static final double kInchesPerVisionY = 4.273662947; // VisionY = 27 - (limelight ty output)
+    public static final double kDegPerVisionX = 0.971;
     public static final double kVisionDistToMotor = 0.00175;
     public static final double kVisionXToMotor = 0.05;
     public static final double kVisionDistToStop = 7.0;
