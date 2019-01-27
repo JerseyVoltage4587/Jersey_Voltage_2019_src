@@ -17,6 +17,7 @@ import frc.robot.loops.Looper;
 import frc.robot.subsystems.Drive;
 import frc.robot.util.CrashTracker;
 import frc.robot.util.DriveSignal;
+import frc.robot.util.VisionMath;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -146,6 +147,12 @@ public class Robot extends TimedRobot {
 			SmartDashboard.putNumber("TargetHorizOffset", TargetHorizOffset);
 
 			SmartDashboard.putNumber("POV", OI.getInstance().getPOV());
+
+			VisionMath vm = new VisionMath();
+			double r = vm.findR();
+			SmartDashboard.putNumber("newR", r);
+			SmartDashboard.putNumber("newX", vm.findX(r));
+			SmartDashboard.putNumber("newY", vm.findY(r));
 
 			allPeriodic();
 			setGm();
