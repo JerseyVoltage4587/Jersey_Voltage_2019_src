@@ -107,47 +107,11 @@ public class Robot extends TimedRobot {
 	/**
 	 * This function is called periodically while the robot is in Disabled mode.
 	 */
-	private double convertYToDistInches(double y, double deg){
-		double hyp = (0.082178521 * y * y) + (-1.526552917 * y) + (19.84423076);
-		double distCamToTarget = Math.sqrt((hyp * hyp) + 169.0);
-		double distToTarget = Math.sqrt(64 + (distCamToTarget*distCamToTarget) - (16*distCamToTarget*Math.cos((90+deg)*(Math.PI/180.0))));
-		return distCamToTarget;//distToTarget;//this is to center of robot
-	}
-	private double convertXToTheta(double x){
-		double g = SmartDashboard.getNumber("gyro pos", -99999.0);
-		if((g+x)<0){
-			return -90 - (g+x);
-		}else if((g+x)>0){
-			return 90 - (g+x);
-		}else{
-			return 0;
-		}
-	}
 
 	private boolean m_disabledPeriodic_loggedError = false;
 	@Override
 	public void disabledPeriodic() {
 		try {
-			NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
-			NetworkTableEntry tx = limelightTable.getEntry("tx");
-			double x = tx.getDouble(0.0);
-			double deg = x * Constants.kDegPerVisionX;
-			double angToTarget = convertXToTheta(deg);
-			SmartDashboard.putNumber("angToTarget", angToTarget);
-
-			NetworkTableEntry ty = limelightTable.getEntry("ty");
-			double y = ty.getDouble(0.0);
-			double distToTarget = convertYToDistInches(y, deg);
-			SmartDashboard.putNumber("distToTarget", distToTarget);
-			double g = SmartDashboard.getNumber("gyro pos", -99999.0);
-			double distTargetToCenter = Math.sqrt(64 + (distToTarget*distToTarget) - (16*distToTarget*Math.cos((90+Math.abs(deg)+Math.abs(g))*(Math.PI/180.0))));
-			SmartDashboard.putNumber("distTargetToCenter", distTargetToCenter);
-
-			double TargetHorizOffset = (distToTarget * Math.cos((angToTarget)*(Math.PI/180.0))) + (8.5*Math.sin(g*Math.PI/180.0));//+8.5sin(g)=offset from center of robot
-			SmartDashboard.putNumber("TargetHorizOffset", TargetHorizOffset);
-
-			SmartDashboard.putNumber("POV", OI.getInstance().getPOV());
-
 			VisionMath vm = new VisionMath();
 			double r = vm.findR();
 			SmartDashboard.putNumber("newR", r);
