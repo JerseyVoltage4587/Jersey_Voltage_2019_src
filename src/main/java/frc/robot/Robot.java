@@ -114,9 +114,11 @@ public class Robot extends TimedRobot {
 		try {
 			VisionMath vm = new VisionMath();
 			double r = vm.findR();
+			double xCam = vm.findX(r);
+			double yCam = vm.findY(r);
 			SmartDashboard.putNumber("newR", r);
-			SmartDashboard.putNumber("newX", vm.findX(r));
-			SmartDashboard.putNumber("newY", vm.findY(r));
+			SmartDashboard.putNumber("newX", vm.findRobotX(xCam, yCam));
+			SmartDashboard.putNumber("newY", vm.findRobotY(xCam, yCam));
 
 			allPeriodic();
 			setGm();
@@ -160,7 +162,11 @@ public class Robot extends TimedRobot {
 			// Start the subsystem loops.
 			mEnabledLooper.start();
 
+			//Drive.getInstance().startSimpleVisionDrive();
+
+			Drive.getInstance().setDesiredAngle(-40);
 			Drive.getInstance().startVisionDrive();
+
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");
 			if ( m_autonomousInit_loggedError == false ) {

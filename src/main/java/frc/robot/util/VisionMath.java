@@ -53,4 +53,16 @@ public class VisionMath {
         double y = r * (Math.sin(ty)*Math.sin(tx));
         return y;
     }
+
+    public double findRobotX(double xCam, double yCam){
+        double g = Gyro.getYaw() * (Math.PI/180.0);
+        double x = (xCam * Math.cos(g)) - (yCam * Math.sin(g));
+        return x;
+    }
+
+    public double findRobotY(double xCam, double yCam){
+        double g = Gyro.getYaw() * (Math.PI/180.0);
+        double y = (xCam * Math.sin(g)) + (yCam * Math.cos(g));
+        return y;
+    }
 }

@@ -39,6 +39,8 @@ public class Constants{
     public static final double kZRobotInches = 13;
     public static final double kCameraRotation = 28 * (Math.PI / 180.0);
 
+    public static final double kTurnToAngleKp = 0.02;
+
     /* ROBOT PHYSICAL CONSTANTS */
 
     // Wheels

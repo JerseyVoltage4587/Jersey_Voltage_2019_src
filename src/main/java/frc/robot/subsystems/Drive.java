@@ -47,7 +47,8 @@ public class Drive extends Subsystem {
         OPEN_LOOP, // open loop voltage control
         PATH_FOLLOWING, // used for autonomous driving
 		TEST_MODE, // to run the testSubsystem() method once, then return to OPEN_LOOP
-		VISION_DRIVE
+		SIMPLE_VISION_DRIVE,
+		VISION_DRIVE,
     }
     public DriveControlState getState(){
     	return mDriveControlState;
@@ -77,6 +78,12 @@ public class Drive extends Subsystem {
     	synchronized(Drive.class){
     		return m_rightPathPos;
     	}
+	}
+	double m_desiredAngle;
+	public void setDesiredAngle(double angle){
+    	synchronized(Drive.class){
+    		m_leftPathPos = m_desiredAngle = angle;
+    	}
     }
 
     // Control states
@@ -102,6 +109,13 @@ public class Drive extends Subsystem {
     		mDriveControlState = DriveControlState.PATH_FOLLOWING;
     	}
     }
+	
+	public void startSimpleVisionDrive() {
+    	System.out.println("in startSimpleVisionDrive");
+    	synchronized (Drive.this) {
+    		mDriveControlState = DriveControlState.SIMPLE_VISION_DRIVE;
+    	}
+	}
 	
 	public void startVisionDrive() {
     	System.out.println("in startVisionDrive");
@@ -154,6 +168,9 @@ public class Drive extends Subsystem {
                 	testSubsystem();
                 	mDriveControlState = DriveControlState.OPEN_LOOP;
 					break;
+				case SIMPLE_VISION_DRIVE:
+					doSimpleVisionDrive();
+					break;
 				case VISION_DRIVE:
 					doVisionDrive();
 					break;
@@ -171,15 +188,12 @@ public class Drive extends Subsystem {
             mCSVWriter.flush();
         }
 	};
-	private double visionX, visionY;
-	private double visionDriveAverageSpeed;
-	private double distToTarget;
 
-	private void doVisionDrive(){
+	private void doSimpleVisionDrive(){
 		NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 		NetworkTableEntry ty = limelightTable.getEntry("ty");
 		double y = ty.getDouble(0.0);
-		distToTarget = (y * Constants.kInchesPerVisionY) - 7;
+		double distToTarget = (y * Constants.kInchesPerVisionY) - 7;
 		SmartDashboard.putNumber("distToTarget", distToTarget);
 		
 		NetworkTableEntry tx = limelightTable.getEntry("tx");
@@ -213,6 +227,13 @@ public class Drive extends Subsystem {
 		}
 		System.out.println(left+","+right);
 		setMotorLevels(left, -right);
+	}
+
+	private void doVisionDrive(){
+		double g = Gyro.getYaw();
+		double deltaAngle = m_desiredAngle - g;
+		double motorLevel = deltaAngle * Constants.kTurnToAngleKp;
+		setMotorLevels(motorLevel, motorLevel);
 	}
 
 	private void setMotorLevels(double left, double right){
