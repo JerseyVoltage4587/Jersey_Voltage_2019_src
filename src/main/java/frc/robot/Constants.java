@@ -39,7 +39,14 @@ public class Constants{
     public static final double kZRobotInches = 13;
     public static final double kCameraRotation = 28 * (Math.PI / 180.0);
 
-    public static final double kTurnToAngleKp = 0.02;
+    public static final double kTurnToAngleKp = 0.04;
+    public static final double kTurnToAngleKd = 0.05;
+    public static final double kTurnToAngleTolerance = 1.0;
+    public static final double kTurnToAngleKf = 0.125;// 10ms per 8deg
+    
+    public static final double kDriveDistKp = 0.0;
+    public static final double kDriveDistKv = 0.0;
+    public static final double kDriveDistTolerance = 0.0;//feet
 
     /* ROBOT PHYSICAL CONSTANTS */
 

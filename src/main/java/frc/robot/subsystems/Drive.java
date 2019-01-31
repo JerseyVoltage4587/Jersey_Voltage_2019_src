@@ -1,6 +1,9 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.*;
+
+import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -49,6 +52,8 @@ public class Drive extends Subsystem {
 		TEST_MODE, // to run the testSubsystem() method once, then return to OPEN_LOOP
 		SIMPLE_VISION_DRIVE,
 		VISION_DRIVE,
+		TURN_ANGLE,
+		DRIVE_DISTANCE,
     }
     public DriveControlState getState(){
     	return mDriveControlState;
@@ -82,7 +87,18 @@ public class Drive extends Subsystem {
 	double m_desiredAngle;
 	public void setDesiredAngle(double angle){
     	synchronized(Drive.class){
-    		m_leftPathPos = m_desiredAngle = angle;
+			m_desiredAngle = angle;
+			m_turnDone = false;
+    	}
+	}
+	double m_desiredDist, m_xNext;
+	int m_zeroLeftEncoder, m_zeroRightEncoder;
+	public void setDesiredDist(double distInches){
+    	synchronized(Drive.class){
+			m_desiredDist = distInches / 12.0;//feet
+			m_zeroLeftEncoder = getLeftEnc();
+			m_zeroRightEncoder = getRightEnc();
+			m_xNext = 0;
     	}
     }
 
@@ -117,12 +133,40 @@ public class Drive extends Subsystem {
     	}
 	}
 	
+	private boolean m_turnDone = false;
+	public boolean getTurnDone(){
+    	synchronized(Drive.class){
+    		return m_turnDone;
+    	}
+	}
+	public void startTurnAngle() {
+    	System.out.println("in startTurnAngle");
+    	synchronized (Drive.this) {
+			mDriveControlState = DriveControlState.TURN_ANGLE;
+			m_turnDone = false;
+    	}
+	}
+	
+	private boolean m_driveDone = false;
+	public boolean getDriveDone(){
+    	synchronized(Drive.class){
+    		return m_driveDone;
+    	}
+	}
+	public void startDriveDist() {
+    	System.out.println("in startDriveDist");
+    	synchronized (Drive.this) {
+			mDriveControlState = DriveControlState.DRIVE_DISTANCE;
+			m_driveDone = false;
+    	}
+	}
+	
 	public void startVisionDrive() {
     	System.out.println("in startVisionDrive");
     	synchronized (Drive.this) {
     		mDriveControlState = DriveControlState.VISION_DRIVE;
     	}
-    }
+	}
 
     public void runTest() {
     	System.out.println("in runTest");
@@ -141,7 +185,7 @@ public class Drive extends Subsystem {
             	SmartDashboard.putNumber("timesInOnStart", timesInOnStart);
             	startTime = System.nanoTime();
                 setOpenLoop(DriveSignal.NEUTRAL);
-                setBrakeMode(false);
+				setBrakeMode(false);
             }
         }
 
@@ -172,7 +216,13 @@ public class Drive extends Subsystem {
 					doSimpleVisionDrive();
 					break;
 				case VISION_DRIVE:
-					doVisionDrive();
+					//doVisionDrive();
+					break;
+				case TURN_ANGLE:
+					doTurnAngle();
+					break;
+				case DRIVE_DISTANCE:
+					doDriveDistance();
 					break;
                 default:
                     System.out.println("Unexpected drive control state: " + mDriveControlState);
@@ -229,11 +279,91 @@ public class Drive extends Subsystem {
 		setMotorLevels(left, -right);
 	}
 
-	private void doVisionDrive(){
+	private double lastG = 0;
+	private double lastTime = 0;
+	private boolean turnMaybeDone = false;
+	private int count = 0;
+	private void doTurnAngle(){
 		double g = Gyro.getYaw();
-		double deltaAngle = m_desiredAngle - g;
-		double motorLevel = deltaAngle * Constants.kTurnToAngleKp;
+		double time = System.nanoTime();
+		double motorLevel = 0;
+
+		if(turnMaybeDone == true){
+			count+=1;
+		}else{
+			count = 0;
+		}
+		if(count > 15){
+			m_turnDone = true;
+		}
+
+		//turn component
+		if(lastG != 0.0 && lastTime != 0.0){
+			double deltaAngle = m_desiredAngle - g;
+
+			double pComponent = deltaAngle * Constants.kTurnToAngleKp;
+			double dComponent = (deltaAngle - (m_desiredAngle - lastG)) * Constants.kTurnToAngleKd;
+			double fComponent = 0;
+			if(Math.abs(deltaAngle) < 5){
+				fComponent = 1.75 * Constants.kTurnToAngleKf;
+			}else if(Math.abs(deltaAngle) < 25){
+				fComponent = 2.0 * Constants.kTurnToAngleKf;
+			}else if(Math.abs(deltaAngle) < 40){
+				fComponent = 3.0 * Constants.kTurnToAngleKf;
+			}else{
+				fComponent = 6.0 * Constants.kTurnToAngleKf;
+			}
+			if(deltaAngle < 0){
+				fComponent *= -1;
+			}
+
+			motorLevel = fComponent;
+								
+			if(Math.abs(deltaAngle)<Constants.kTurnToAngleTolerance){
+				//turn done
+				turnMaybeDone = true;
+			}else{
+				turnMaybeDone = false;
+			}
+		}
+		lastG = g;
+		lastTime = time;
+
+		if(m_turnDone){
+			//done!
+			motorLevel = 0.0;
+		}
+		System.out.print(motorLevel);
 		setMotorLevels(motorLevel, motorLevel);
+	}
+
+	double m_desiredVel;
+	private void doDriveDistance(){
+		double currentDistLeft = (getLeftEnc() - m_zeroLeftEncoder) * Constants.kInchesPerTic / 12.0;//ft
+		double currentDistRight = (getRightEnc() - m_zeroRightEncoder) * Constants.kInchesPerTic / 12.0;//ft
+		double averageDist = (currentDistLeft + currentDistRight) / 2.0;
+
+		if(averageDist < m_desiredDist/2){
+			m_desiredVel += Constants.kMaxAcceleration * 0.01;
+			if(m_desiredVel > Constants.kMaxFeetPerSecond){
+				m_desiredVel = Constants.kMaxFeetPerSecond;
+			}
+		}else{
+			m_desiredVel -= Constants.kMaxAcceleration * 0.01;
+		}
+
+		if(Math.abs(averageDist - m_desiredDist)<Constants.kDriveDistTolerance){
+			m_driveDone = true;
+		}
+
+		double mLeft = calculateDriveMotorLevel(currentDistLeft);
+		double mRight = -calculateDriveMotorLevel(currentDistRight);
+
+		setMotorLevels(mLeft, mRight);
+	}
+
+	double calculateDriveMotorLevel(double currentDist){
+		return m_desiredVel * Constants.kDriveDistKv + (m_xNext - currentDist) * Constants.kDriveDistKp;
 	}
 
 	private void setMotorLevels(double left, double right){

@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import java.util.Arrays;
 
+import frc.robot.commands.DriveDist;
+import frc.robot.commands.TurnToAngle;
 import frc.robot.loops.Looper;
 import frc.robot.subsystems.Drive;
 import frc.robot.util.CrashTracker;
@@ -164,8 +166,9 @@ public class Robot extends TimedRobot {
 
 			//Drive.getInstance().startSimpleVisionDrive();
 
-			Drive.getInstance().setDesiredAngle(-40);
-			Drive.getInstance().startVisionDrive();
+			Command autonomousCommand = new DriveDist(50);
+			//Command autonomousCommand = new TurnToAngle(50);
+			autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");
