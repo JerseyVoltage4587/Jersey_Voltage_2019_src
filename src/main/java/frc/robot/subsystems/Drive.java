@@ -356,12 +356,9 @@ public class Drive extends Subsystem {
 			m_driveDone = true;
 		}
 
-		double mLeft = -calculateDriveMotorLevel(currentDistLeft);
-		double mRight = calculateDriveMotorLevel(currentDistRight);
+		double mLeft = calculateDriveMotorLevel(currentDistLeft);
+		double mRight = -calculateDriveMotorLevel(currentDistRight);
 
-		System.out.println("Kv: "+m_desiredVel * Constants.kDriveDistKv);
-		System.out.println("Kp Left: "+(m_xNext - currentDistLeft) * Constants.kDriveDistKp);
-		System.out.println("Kp Right: "+(m_xNext - currentDistRight) * Constants.kDriveDistKp);
 		setMotorLevels(mLeft, mRight);
 	}
 

@@ -38,9 +38,9 @@ public class Robot extends TimedRobot {
 
 	// The subsystem that manages the drive base.
 	// Again, it would be better for SubsystemManager to control the interactions with the subsystem.
-	/*public static Drive getDrive(){
+	public static Drive getDrive(){
 		return Drive.getInstance();
-	}*/
+	}
 	private static PowerDistributionPanel m_PDP;
 	public static PowerDistributionPanel getPDP(){
 		return m_PDP;
@@ -166,9 +166,9 @@ public class Robot extends TimedRobot {
 
 			//Drive.getInstance().startSimpleVisionDrive();
 
-			//Command autonomousCommand = new DriveDist(5);
+			Command autonomousCommand = new DriveDist(50);
 			//Command autonomousCommand = new TurnToAngle(50);
-			//autonomousCommand.start();
+			autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");
@@ -212,8 +212,8 @@ public class Robot extends TimedRobot {
 			mEnabledLooper.start();
 
 			// Change the Drive subsystem to manual control.
-			//getDrive().setOpenLoop(DriveSignal.NEUTRAL);
-			System.out.println("stop plz");
+			getDrive().setOpenLoop(DriveSignal.NEUTRAL);
+
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"teleopInit");
 			if ( m_teleopInit_loggedError == false ) {
@@ -252,7 +252,7 @@ public class Robot extends TimedRobot {
 
 			// ===== TEMPORARY CODE - REMOVE THIS =====
 	        mEnabledLooper.start();
-	        //getDrive().runTest();
+	        getDrive().runTest();
 	        // ========================================
 
 	        // ... Start a separate thread that runs through the self-test for each registered subsystem.
