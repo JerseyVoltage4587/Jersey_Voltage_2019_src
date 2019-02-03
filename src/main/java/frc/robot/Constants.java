@@ -6,7 +6,7 @@ package frc.robot;
  * determined through calibrations.
  */
 public class Constants{
-    public static double kLooperDt = 0.005;
+    public static double kLooperDt = 0.01;
 
     public static double kSensorUnitsPerRotation = 4096;
     
@@ -14,7 +14,7 @@ public class Constants{
     public static double kMaxFeetPerSecond = 10.0;
     public static double kMaxAcceleration = 15.0;
     public static double kMaxJerk = 40.0;
-    public static double kWheelBaseFeet = 25.75 / 12.0;
+    public static double kWheelBaseFeet = 40.0 / 12.0;//25.75
     
     public static final double kLiftAMax = 20;
     public static final double kLiftVMax = 20;
@@ -45,8 +45,8 @@ public class Constants{
     public static final double kTurnToAngleKf = 0.125;// 10ms per 8deg
     
     public static final double kDriveDistKp = 0.0;
-    public static final double kDriveDistKv = 0.0;
-    public static final double kDriveDistTolerance = 0.0;//feet
+    public static final double kDriveDistKv = 0.01;
+    public static final double kDriveDistTolerance = 0.2;//feet
 
     /* ROBOT PHYSICAL CONSTANTS */
 
@@ -143,10 +143,10 @@ public class Constants{
     public static final double kODesiredFinalMotor = 0.8;
     public static final double kSimpleArcTolerance = 10.0;
 
-    public static final double kPathFollowKa = 0.1;//0.0001
-    public static final double kPathFollowKv = 0.0029;//0.000275
-    public static final double kPathFollowKp = 0.00005;//0.00025
-    public static final double kPathFollowKg = 0.01;//0.015
+    public static final double kPathFollowKa = 0.05;
+    public static final double kPathFollowKv = 0.005;//0.0029;
+    public static final double kPathFollowKp = 0.00005;
+    public static final double kPathFollowKg = 0.0005;
 
     public static final double kPathHoldKp = 0.0005;
     public static final double kPathHoldKg = 0.0001;

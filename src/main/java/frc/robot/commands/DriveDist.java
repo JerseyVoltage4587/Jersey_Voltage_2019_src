@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
 import frc.robot.Robot;
+import frc.robot.util.DriveSignal;
 
 public class DriveDist extends Command {
   double m_dist;
@@ -13,7 +14,7 @@ public class DriveDist extends Command {
   @Override
   protected void initialize() {
     Robot.getDrive().setDesiredDist(m_dist);
-    Robot.getDrive().startDriveDist();
+    Robot.getDrive().startPath();
   }
 
   // Called repeatedly when this Command is scheduled to run
@@ -24,12 +25,13 @@ public class DriveDist extends Command {
   // Make this return true when this Command no longer needs to run execute()
   @Override
   protected boolean isFinished() {
-    return Robot.getDrive().getDriveDone();
+    return true;
   }
 
   // Called once after isFinished returns true
   @Override
   protected void end() {
+    //Robot.getDrive().setOpenLoop(DriveSignal.NEUTRAL);
   }
 
   // Called when another command which requires one or more of the same

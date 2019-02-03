@@ -9,6 +9,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
 import frc.robot.Robot;
+import frc.robot.util.DriveSignal;
 
 public class TurnToAngle extends Command {
   double m_angle;
@@ -39,6 +40,7 @@ public class TurnToAngle extends Command {
   // Called once after isFinished returns true
   @Override
   protected void end() {
+    //Robot.getDrive().setOpenLoop(DriveSignal.NEUTRAL);
   }
 
   // Called when another command which requires one or more of the same

@@ -81,7 +81,7 @@ public class OI {
     	count3Button1 	= new JoystickButton(driverStation, 9);
     	count3Button2 	= new JoystickButton(driverStation, 8);
     	
-    	System.out.println("OI start");
+    	//System.out.println("OI start");  println is evil
     	
     	
 	}
@@ -89,8 +89,7 @@ public class OI {
 	// Get the value of the "drive" stick.
 	public double getDrive()
 	{
-		double x = -1 * stick1.getRawAxis(1);
-		return -0.5;
+		return -1 * stick1.getRawAxis(1);
 	}
 
 	// Get the value of the "turn" stick.

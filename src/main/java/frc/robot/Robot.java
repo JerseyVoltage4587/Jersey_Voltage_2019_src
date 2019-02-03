@@ -1,4 +1,5 @@
 package frc.robot;
+
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -8,9 +9,9 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import frc.robot.paths.*;
 import java.util.Arrays;
 
 import frc.robot.commands.DriveDist;
@@ -20,6 +21,9 @@ import frc.robot.subsystems.Drive;
 import frc.robot.util.CrashTracker;
 import frc.robot.util.DriveSignal;
 import frc.robot.util.VisionMath;
+import frc.robot.util.Gyro;
+import jaci.pathfinder.Trajectory;
+import jaci.pathfinder.Trajectory.Segment;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -60,6 +64,7 @@ public class Robot extends TimedRobot {
 	private boolean m_robotInit_loggedError = false;
 	@Override
 	public void robotInit() {
+		
 		try {
 			CrashTracker.logRobotInit();
 		    m_PDP = new PowerDistributionPanel(0);
@@ -69,6 +74,10 @@ public class Robot extends TimedRobot {
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
 			OI.getInstance();
+			long startTime = System.nanoTime();
+			Robot.getDrive().setDesiredArc(50, -35);
+			long endTime = System.nanoTime();
+			System.out.println("pathWriteTime: "+(startTime-endTime)/1000000.0);
 			
 		    //CameraServer.getInstance().startAutomaticCapture();
 		} catch (Throwable t) {
@@ -76,8 +85,60 @@ public class Robot extends TimedRobot {
 			if ( m_robotInit_loggedError == false ) {
 				m_robotInit_loggedError = true ;
 				System.out.println("robotInit Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
+
+		double test0 = Robot.getDrive().getLeftEnc();
+		double test1 = Robot.getDrive().getRightEnc();
+/*
+
+		double m_desiredDist = 2.0;//feet
+			
+			double halfTime = Math.sqrt(m_desiredDist/Constants.kMaxAcceleration);
+			int numIntervals = (int)(100*halfTime)+1;
+			halfTime = numIntervals * 0.01;
+			double m_acceleration = m_desiredDist / (halfTime*halfTime);
+
+			Segment[] path = new Segment[(numIntervals*2)+2];
+			double yaw = Gyro.getYaw();
+			double xMax=0;
+			double vMax=0;
+			for(int i = 0;i<numIntervals+1;i++){
+				double v = m_acceleration * (i * 0.01);
+				double x = 0.5 * m_acceleration * ((i * 0.01)*(i * 0.01));
+				//System.out.println("x: "+x+" v: "+v+" a: "+m_acceleration+" yaw: "+yaw);
+				path[i] = new Segment(0.01, 0, 0, x, v, m_acceleration, 0, yaw);
+				xMax = x;
+				vMax = v;
+			}
+			for(int i = 0;i<numIntervals+1;i++){
+				double v = vMax - (m_acceleration * (i * 0.01));
+				double x = xMax + (vMax*(i*0.01)) - (0.5 * m_acceleration * ((i * 0.01)*(i * 0.01)));
+				//System.out.println("x: "+x+" v: "+v+" a: "+m_acceleration+" yaw: "+yaw);
+				path[i+numIntervals+1] = new Segment(0.01, 0, 0, x, v, -m_acceleration, 0, yaw);
+			}
+			Trajectory m_leftTrajectory = new Trajectory(path);
+			Trajectory m_rightTrajectory = new Trajectory(path);
+
+			PathFollower follower = new PathFollower(m_leftTrajectory, m_rightTrajectory);
+
+			follower.initialize();
+
+			long[] timeArray = new long[100];
+			int tpos = -1;
+			timeArray[++tpos] = System.nanoTime();
+			follower.execute();
+			timeArray[++tpos] = System.nanoTime();
+			follower.execute();
+			timeArray[++tpos] = System.nanoTime();
+			follower.execute();
+			timeArray[++tpos] = System.nanoTime();
+			System.out.println("step0: "+(timeArray[1]-timeArray[0])/1000000.0);
+			System.out.println("step1: "+(timeArray[2]-timeArray[1])/1000000.0);
+			System.out.println("step2: "+(timeArray[3]-timeArray[2])/1000000.0);
+*/
+
 	}
 
 	/**
@@ -102,6 +163,7 @@ public class Robot extends TimedRobot {
 			if ( m_disabledInit_loggedError == false ) {
 				m_disabledInit_loggedError = true;
 				System.out.println("disabledInit Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}
@@ -123,13 +185,12 @@ public class Robot extends TimedRobot {
 			SmartDashboard.putNumber("newY", vm.findRobotY(xCam, yCam));
 
 			allPeriodic();
-			setGm();
-			//System.out.println(getGm());
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"disabledPeriodic");
 			if ( m_disabledPeriodic_loggedError == false ) {
 				m_disabledPeriodic_loggedError = true;
 				System.out.println("disabledPeriodic Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}
@@ -139,14 +200,6 @@ public class Robot extends TimedRobot {
 	 * You can use it to set the subsystems up to run the autonomous commands.
 	 */
 	Command autonomousCommand;
-	private static String m_gm;
-	public static String getGm(){
-		return m_gm;
-	}
-	private void setGm(){
-		m_gm = DriverStation.getInstance().getGameSpecificMessage();
-		SmartDashboard.putString("GM", m_gm);
-	}
 	private boolean m_autonomousInit_loggedError = false;
 	private static boolean mInTeleop = false;
 	public static boolean getInTeleop(){
@@ -165,16 +218,17 @@ public class Robot extends TimedRobot {
 			mEnabledLooper.start();
 
 			//Drive.getInstance().startSimpleVisionDrive();
-
-			Command autonomousCommand = new DriveDist(50);
+    		Robot.getDrive().startPath();
+			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
-			autonomousCommand.start();
+			//autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");
 			if ( m_autonomousInit_loggedError == false ) {
 				m_autonomousInit_loggedError = true;
 				System.out.println("autonomousInit Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}
@@ -193,6 +247,7 @@ public class Robot extends TimedRobot {
 			if ( m_autonomousPeriodic_loggedError == false ) {
 				m_autonomousPeriodic_loggedError = true;
 				System.out.println("autonomousPeriodic Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}
@@ -219,6 +274,7 @@ public class Robot extends TimedRobot {
 			if ( m_teleopInit_loggedError == false ) {
 				m_teleopInit_loggedError = true;
 				System.out.println("teleopInit Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}
@@ -236,6 +292,7 @@ public class Robot extends TimedRobot {
 			if ( m_teleopPeriodic_loggedError == false ) {
 				m_teleopPeriodic_loggedError = true;
 				System.out.println("teleopPeriodic Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}
@@ -263,6 +320,7 @@ public class Robot extends TimedRobot {
 			if ( m_testInit_loggedError == false ) {
 				m_testInit_loggedError = true;
 				System.out.println("testInit Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}
@@ -280,6 +338,7 @@ public class Robot extends TimedRobot {
 			if ( m_testPeriodic_loggedError == false ) {
 				m_testPeriodic_loggedError = true;
 				System.out.println("testPeriodic Crash: "+t.toString());
+				t.printStackTrace();
 			}
 		}
 	}

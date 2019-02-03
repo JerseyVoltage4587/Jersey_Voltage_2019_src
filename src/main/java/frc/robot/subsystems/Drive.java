@@ -17,15 +17,21 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 import frc.robot.util.Gyro;
 import frc.robot.util.ReflectingCSVWriter;
+import jaci.pathfinder.Trajectory;
+import jaci.pathfinder.Trajectory.Segment;
 
 import java.io.File;
 import java.io.FileWriter;
 
+import frc.robot.paths.*;
+
 import frc.robot.Constants;
 import frc.robot.OI;
+import frc.robot.Robot;
 import frc.robot.RobotMap;
 import frc.robot.loops.Loop;
 import frc.robot.loops.Looper;
+import frc.robot.util.ArcMath;
 import frc.robot.util.DriveSignal;
 
 public class Drive extends Subsystem {
@@ -71,7 +77,7 @@ public class Drive extends Subsystem {
     	synchronized(Drive.class){
     		m_leftPathPos = leftPathPos * Constants.kInchesPerTic / 12.0;
     		m_rightPathPos = rightPathPos * Constants.kInchesPerTic / 12.0;
-    		System.out.println(m_leftPathPos);
+    		//System.out.println(m_leftPathPos);
     	}
     }
     public double getLeftPathPos(){
@@ -91,14 +97,53 @@ public class Drive extends Subsystem {
 			m_turnDone = false;
     	}
 	}
+
+	public void setDesiredArc(double outerRadiusInches, double degrees){
+		//+degrees = turn right, -degrees = turn left
+		ArcMath am = new ArcMath();
+		am.calcArc(outerRadiusInches, degrees);
+		m_leftTrajectory = am.getLeftTrajectory();
+		m_rightTrajectory = am.getRightTrajectory();
+	}
+
 	double m_desiredDist, m_xNext;
 	int m_zeroLeftEncoder, m_zeroRightEncoder;
+	double m_acceleration;
 	public void setDesiredDist(double distInches){
     	synchronized(Drive.class){
 			m_desiredDist = distInches / 12.0;//feet
-			m_zeroLeftEncoder = getLeftEnc();
+			/*m_zeroLeftEncoder = getLeftEnc();
 			m_zeroRightEncoder = getRightEnc();
-			m_xNext = 0;
+			m_xNext = 0;*/
+			double halfTime = Math.sqrt(m_desiredDist/Constants.kMaxAcceleration);
+			int numIntervals = (int)(100*halfTime)+1;
+			halfTime = numIntervals * 0.01;
+			m_acceleration = m_desiredDist / (halfTime*halfTime);
+
+			Segment[] path = new Segment[(numIntervals*2)+2];
+			double yaw = Gyro.getYaw();
+			double xMax=0;
+			double vMax=0;
+			for(int i = 0;i<numIntervals+1;i++){
+				double v = m_acceleration * (i * 0.01);
+				double x = 0.5 * m_acceleration * ((i * 0.01)*(i * 0.01));
+				//System.out.println("x: "+x+" v: "+v+" a: "+m_acceleration+" yaw: "+yaw);
+				path[i] = new Segment(0.01, 0, 0, x, v, m_acceleration, 0, yaw);
+				xMax = x;
+				vMax = v;
+			}
+			for(int i = 0;i<numIntervals+1;i++){
+				double v = vMax - (m_acceleration * (i * 0.01));
+				double x = xMax + (vMax*(i*0.01)) - (0.5 * m_acceleration * ((i * 0.01)*(i * 0.01)));
+				//System.out.println("x: "+x+" v: "+v+" a: "+m_acceleration+" yaw: "+yaw);
+				path[i+numIntervals+1] = new Segment(0.01, 0, 0, x, v, -m_acceleration, 0, yaw);
+			}
+			m_leftTrajectory = new Trajectory(path);
+			m_rightTrajectory = new Trajectory(path);
+			for(int i =0;i<m_leftTrajectory.length();i++){
+				Segment s = m_leftTrajectory.segments[i];
+				//System.out.println("step: "+i+" pos: "+s.position+" vel: "+s.velocity+" acc: "+s.acceleration);
+			}
     	}
     }
 
@@ -117,17 +162,25 @@ public class Drive extends Subsystem {
     private DebugOutput mDebugOutput;
     private final ReflectingCSVWriter<DebugOutput> mCSVWriter;
     
-    private double mDrive,mTurn;
+	private double mDrive,mTurn;
+	
+	private boolean mStartingPath=false;
+	private String pathFilename;
+    public void setPathFilename(String x){
+    	pathFilename = x;
+	}
+	private Trajectory m_leftTrajectory,m_rightTrajectory;
     
     public void startPath() {
-    	System.out.println("in startPath");
+    	//System.out.println("in startPath");
     	synchronized (Drive.this) {
+			mStartingPath = true;
     		mDriveControlState = DriveControlState.PATH_FOLLOWING;
     	}
     }
 	
 	public void startSimpleVisionDrive() {
-    	System.out.println("in startSimpleVisionDrive");
+    	//System.out.println("in startSimpleVisionDrive");
     	synchronized (Drive.this) {
     		mDriveControlState = DriveControlState.SIMPLE_VISION_DRIVE;
     	}
@@ -140,7 +193,7 @@ public class Drive extends Subsystem {
     	}
 	}
 	public void startTurnAngle() {
-    	System.out.println("in startTurnAngle");
+    	//System.out.println("in startTurnAngle");
     	synchronized (Drive.this) {
 			mDriveControlState = DriveControlState.TURN_ANGLE;
 			m_turnDone = false;
@@ -153,23 +206,29 @@ public class Drive extends Subsystem {
     		return m_driveDone;
     	}
 	}
+	private double m_tHalfway;
+	private double m_tStart;
 	public void startDriveDist() {
-    	System.out.println("in startDriveDist");
+    	//System.out.println("in startDriveDist");
     	synchronized (Drive.this) {
 			mDriveControlState = DriveControlState.DRIVE_DISTANCE;
 			m_driveDone = false;
+			dCount = 0;
+			driveMaybeDone = false;
+			m_tHalfway = Math.sqrt(m_desiredDist/Constants.kMaxAcceleration);
+			m_tStart = System.nanoTime() / 1000000000.0;
     	}
 	}
 	
 	public void startVisionDrive() {
-    	System.out.println("in startVisionDrive");
+    	//System.out.println("in startVisionDrive");
     	synchronized (Drive.this) {
     		mDriveControlState = DriveControlState.VISION_DRIVE;
     	}
 	}
 
     public void runTest() {
-    	System.out.println("in runTest");
+    	//System.out.println("in runTest");
     	synchronized (Drive.this) {
     		mDriveControlState = DriveControlState.TEST_MODE;
     	}
@@ -191,9 +250,9 @@ public class Drive extends Subsystem {
 
         @Override
         public void onLoop(double timestamp) {
-        	iCall++;
-        	if(iCall % 1000 == 0){
-        		System.out.println("onLoop " + iCall + " " + mDriveControlState + " " + mLeftMaster.getControlMode());
+			iCall++;
+			if(iCall % 1000 == 0){
+        		//System.out.println("onLoop " + iCall + " " + mDriveControlState + " " + mLeftMaster.getControlMode());
         	}
             synchronized (Drive.this) {
                 switch (mDriveControlState) {
@@ -206,7 +265,8 @@ public class Drive extends Subsystem {
                     _drive.setSafetyEnabled(true);
                     break;
                 case PATH_FOLLOWING:
-                    _drive.setSafetyEnabled(false);
+					_drive.setSafetyEnabled(false);
+					doPathFollowing();
                     break;
                 case TEST_MODE:
                 	testSubsystem();
@@ -225,7 +285,7 @@ public class Drive extends Subsystem {
 					doDriveDistance();
 					break;
                 default:
-                    System.out.println("Unexpected drive control state: " + mDriveControlState);
+                    //System.out.println("Unexpected drive control state: " + mDriveControlState);
                     break;
                 }
             }
@@ -275,7 +335,7 @@ public class Drive extends Subsystem {
 			left=0;
 			right=0;
 		}
-		System.out.println(left+","+right);
+		//System.out.println(left+","+right);
 		setMotorLevels(left, -right);
 	}
 
@@ -333,16 +393,37 @@ public class Drive extends Subsystem {
 			//done!
 			motorLevel = 0.0;
 		}
-		System.out.print(motorLevel);
+		//System.out.print(motorLevel);
 		setMotorLevels(motorLevel, motorLevel);
 	}
 
 	double m_desiredVel;
+	boolean driveMaybeDone=false;
+	int dCount = 0;
 	private void doDriveDistance(){
+		if(driveMaybeDone){
+			dCount += 1;
+		}else{
+			dCount = 0;
+		}
+		if(dCount > 15){
+			m_driveDone = true;
+		}
+
+		double tNow = (System.nanoTime() / 1000000000.0);// - m_tStart;
+		if(tNow < m_tHalfway){
+			m_desiredVel = Constants.kMaxAcceleration * tNow;
+			m_xNext = 0.5 * Constants.kMaxAcceleration * tNow * tNow;
+		}else{
+			m_desiredVel = Constants.kMaxAcceleration * ((m_tHalfway*2) - tNow);
+			m_xNext = m_desiredDist - (0.5 * m_desiredVel * ((m_tHalfway*2) - tNow));
+		}
+		//System.out.println("tNow: "+tNow+" m_tHalfway: "+m_tHalfway+" m_tStart: "+m_tStart);
+
 		double currentDistLeft = (getLeftEnc() - m_zeroLeftEncoder) * Constants.kInchesPerTic / 12.0;//ft
 		double currentDistRight = (getRightEnc() - m_zeroRightEncoder) * Constants.kInchesPerTic / 12.0;//ft
 		double averageDist = (currentDistLeft + currentDistRight) / 2.0;
-
+		/*System.out.println("avgDist: "+averageDist+" desiredDist: "+m_desiredDist);
 		if(averageDist < m_desiredDist/2){
 			m_desiredVel += Constants.kMaxAcceleration * 0.01;
 			if(m_desiredVel > Constants.kMaxFeetPerSecond){
@@ -351,19 +432,46 @@ public class Drive extends Subsystem {
 		}else{
 			m_desiredVel -= Constants.kMaxAcceleration * 0.01;
 		}
-
+		*/
 		if(Math.abs(averageDist - m_desiredDist)<Constants.kDriveDistTolerance){
-			m_driveDone = true;
+			driveMaybeDone = true;
+		}
+		if(m_driveDone){
+			m_desiredVel = 0.0;
+			m_xNext = m_desiredDist;
 		}
 
 		double mLeft = calculateDriveMotorLevel(currentDistLeft);
 		double mRight = -calculateDriveMotorLevel(currentDistRight);
-
+		//System.out.println("vel: "+m_desiredVel+" left: "+mLeft+" right: "+mRight);
+		//m_xNext += m_desiredVel * 0.01;
 		setMotorLevels(mLeft, mRight);
 	}
 
 	double calculateDriveMotorLevel(double currentDist){
 		return m_desiredVel * Constants.kDriveDistKv + (m_xNext - currentDist) * Constants.kDriveDistKp;
+	}
+
+	PathFollower follower = null;
+	
+	private void doPathFollowing(){
+    	if (mStartingPath) {
+    		mStartingPath = false;
+			setPathPos(0,0);
+    		follower = new PathFollower(m_leftTrajectory,m_rightTrajectory);
+    		//System.out.println("follower != null");
+    		follower.initialize();
+    	}
+    	if (follower.isFinished() == false){
+    		//System.out.println("doing path "+System.nanoTime()/1000000000.0);
+			follower.execute();
+			//System.out.println("after execute: "+System.nanoTime()/1000000000.0);
+    		setMotorLevels(follower.getLeftMotorSetting(), follower.getRightMotorSetting());
+    	}else{
+    		//System.out.println("done with path");
+    		setOpenLoop(DriveSignal.NEUTRAL);
+    	}
+    	
 	}
 
 	private void setMotorLevels(double left, double right){
@@ -509,7 +617,7 @@ public class Drive extends Subsystem {
         SmartDashboard.putNumber("right percent output", mRightMaster.getMotorOutputPercent());
         SmartDashboard.putNumber("left position (rotations)", mLeftMaster.getSelectedSensorPosition(0));///4096);
         SmartDashboard.putNumber("right position (rotations)", mRightMaster.getSelectedSensorPosition(0));///4096);
-        SmartDashboard.putNumber("gyro pos", Gyro.getYaw());
+		SmartDashboard.putNumber("gyro pos", Gyro.getYaw());
     }
     
     public class DebugOutput{
@@ -547,7 +655,7 @@ public class Drive extends Subsystem {
     	public boolean rightIsSafetyEnabled;
     }
     
-    public void logValues(){
+    private void logValues(){
     	mDebugOutput.sysTime = System.nanoTime()-startTime;
     	mDebugOutput.driveMode = mDriveControlState.name();
     	mDebugOutput.gyroYaw = Gyro.getYaw();
@@ -582,7 +690,7 @@ public class Drive extends Subsystem {
     	mDebugOutput.rightHasResetOccurred = mRightMaster.hasResetOccurred();
     	mDebugOutput.leftIsSafetyEnabled = mLeftMaster.isSafetyEnabled();
     	mDebugOutput.rightIsSafetyEnabled = mRightMaster.isSafetyEnabled();
-    	mCSVWriter.add(mDebugOutput);
+		mCSVWriter.add(mDebugOutput);
     }
 
     public synchronized void resetEncoders() {
@@ -644,7 +752,7 @@ public class Drive extends Subsystem {
 	   //System.out.println("... end="+rightMaster_end+",vel="+rightMaster_vel);
 	   //Timer.delay(3.0);
 	   
-	   System.out.println("Right Master...");
+	   //System.out.println("Right Master...");
 	   mRightMaster.setSelectedSensorPosition(0, 0, 10);
 	   mRightMaster.set(-0.5);
 	   Timer.delay(3.0);
@@ -653,12 +761,12 @@ public class Drive extends Subsystem {
 	   mRightMaster.set(0);
 	   
 	   w.write("rightMaster,"+rightMaster_end+","+rightMaster_vel+"\n");
-	   System.out.println("... end="+rightMaster_end+",vel="+rightMaster_vel);
-	   System.out.println("rightMasterDistError="+(rightMaster_end-Constants.kTestDistTarget)+" rightMasterVelError="+(rightMaster_vel-Constants.kTestVelTarget));
-	   System.out.println("passed="+((Math.abs(rightMaster_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(rightMaster_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
+	   //System.out.println("... end="+rightMaster_end+",vel="+rightMaster_vel);
+	   //System.out.println("rightMasterDistError="+(rightMaster_end-Constants.kTestDistTarget)+" rightMasterVelError="+(rightMaster_vel-Constants.kTestVelTarget));
+	   //System.out.println("passed="+((Math.abs(rightMaster_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(rightMaster_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
 	   Timer.delay(3.0);
 	   
-	   System.out.println("Right Slave 1...");
+	   //System.out.println("Right Slave 1...");
 	   mRightMaster.setSelectedSensorPosition(0, 0, 10);
 	   _rightSlave1.set(-0.5);
 	   Timer.delay(3.0);
@@ -667,12 +775,12 @@ public class Drive extends Subsystem {
 	   _rightSlave1.set(0);
 
 	   w.write("_rightSlave1,"+rightSlave1_end+","+rightSlave1_vel+"\n");
-	   System.out.println("... end="+rightSlave1_end+",vel="+rightSlave1_vel);
-	   System.out.println("_rightSlave1DistError="+(rightSlave1_end-Constants.kTestDistTarget)+" _rightSlave1VelError="+(rightSlave1_vel-Constants.kTestVelTarget));
-	   System.out.println("passed="+((Math.abs(rightSlave1_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(rightSlave1_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
+	   //System.out.println("... end="+rightSlave1_end+",vel="+rightSlave1_vel);
+	   //System.out.println("_rightSlave1DistError="+(rightSlave1_end-Constants.kTestDistTarget)+" _rightSlave1VelError="+(rightSlave1_vel-Constants.kTestVelTarget));
+	   //System.out.println("passed="+((Math.abs(rightSlave1_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(rightSlave1_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
 	   Timer.delay(3.0);
 	   
-	   System.out.println("Right Slave 2...");
+	   //System.out.println("Right Slave 2...");
 	   mRightMaster.setSelectedSensorPosition(0, 0, 10);
 	   _rightSlave2.set(-0.5);
 	   Timer.delay(3.0);
@@ -681,12 +789,12 @@ public class Drive extends Subsystem {
 	   _rightSlave2.set(0);
 
 	   w.write("_rightSlave2,"+rightSlave2_end+","+rightSlave2_vel+"\n");
-	   System.out.println("... end="+rightSlave2_end+",vel="+rightSlave2_vel);
-	   System.out.println("_rightSlave2DistError="+(rightSlave2_end-Constants.kTestDistTarget)+" _rightSlave2VelError="+(rightSlave2_vel-Constants.kTestVelTarget));
-	   System.out.println("passed="+((Math.abs(rightSlave2_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(rightSlave2_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
+	   //System.out.println("... end="+rightSlave2_end+",vel="+rightSlave2_vel);
+	   //System.out.println("_rightSlave2DistError="+(rightSlave2_end-Constants.kTestDistTarget)+" _rightSlave2VelError="+(rightSlave2_vel-Constants.kTestVelTarget));
+	   //System.out.println("passed="+((Math.abs(rightSlave2_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(rightSlave2_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
 	   Timer.delay(3.0);
 	   
-	   System.out.println("Left Master...");
+	   //System.out.println("Left Master...");
 	   mLeftMaster.setSelectedSensorPosition(0, 0, 10);
 	   mLeftMaster.set(0.5);
 	   Timer.delay(3.0);
@@ -695,12 +803,12 @@ public class Drive extends Subsystem {
 	   mLeftMaster.set(0);
 
 	   w.write("leftMaster,"+leftMaster_end+","+leftMaster_vel+"\n");
-	   System.out.println("... end="+leftMaster_end+",vel="+leftMaster_vel);
-	   System.out.println("leftMasterDistError="+(leftMaster_end-Constants.kTestDistTarget)+" leftMasterVelError="+(leftMaster_vel-Constants.kTestVelTarget));
-	   System.out.println("passed="+((Math.abs(leftMaster_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(leftMaster_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
+	   //System.out.println("... end="+leftMaster_end+",vel="+leftMaster_vel);
+	   //System.out.println("leftMasterDistError="+(leftMaster_end-Constants.kTestDistTarget)+" leftMasterVelError="+(leftMaster_vel-Constants.kTestVelTarget));
+	   //System.out.println("passed="+((Math.abs(leftMaster_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(leftMaster_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
 	   Timer.delay(3.0);
 	   
-	   System.out.println("Left Slave 1...");
+	   //System.out.println("Left Slave 1...");
 	   mLeftMaster.setSelectedSensorPosition(0, 0, 10);
 	   _leftSlave1.set(0.5);
 	   Timer.delay(3.0);
@@ -709,12 +817,12 @@ public class Drive extends Subsystem {
 	   _leftSlave1.set(0);
 
 	   w.write("_leftSlave1,"+leftSlave1_end+","+leftSlave1_vel+"\n");
-	   System.out.println("... end="+leftSlave1_end+",vel="+leftSlave1_vel);
-	   System.out.println("leftSlave1DistError="+(leftSlave1_end-Constants.kTestDistTarget)+" leftSlave1VelError="+(leftSlave1_vel-Constants.kTestVelTarget));
-	   System.out.println("passed="+((Math.abs(leftSlave1_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(leftSlave1_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
+	   //System.out.println("... end="+leftSlave1_end+",vel="+leftSlave1_vel);
+	   //System.out.println("leftSlave1DistError="+(leftSlave1_end-Constants.kTestDistTarget)+" leftSlave1VelError="+(leftSlave1_vel-Constants.kTestVelTarget));
+	   //System.out.println("passed="+((Math.abs(leftSlave1_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(leftSlave1_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
 	   Timer.delay(3.0);
 	   
-	   System.out.println("Left Slave 2...");
+	   //System.out.println("Left Slave 2...");
 	   mLeftMaster.setSelectedSensorPosition(0, 0, 10);
 	   _leftSlave2.set(0.5);
 	   Timer.delay(3.0);
@@ -723,9 +831,9 @@ public class Drive extends Subsystem {
 	   _leftSlave2.set(0);
 
 	   w.write("_leftSlave2,"+leftSlave2_end+","+leftSlave2_vel+"\n");
-	   System.out.println("... end="+leftSlave2_end+",vel="+leftSlave2_vel);
-	   System.out.println("leftSlave2DistError="+(leftSlave2_end-Constants.kTestDistTarget)+" leftSlave2VelError="+(leftSlave2_vel-Constants.kTestVelTarget));
-	   System.out.println("passed="+((Math.abs(leftSlave2_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(leftSlave2_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
+	   //System.out.println("... end="+leftSlave2_end+",vel="+leftSlave2_vel);
+	   //System.out.println("leftSlave2DistError="+(leftSlave2_end-Constants.kTestDistTarget)+" leftSlave2VelError="+(leftSlave2_vel-Constants.kTestVelTarget));
+	   //System.out.println("passed="+((Math.abs(leftSlave2_end-Constants.kTestDistTarget)<Constants.kTestDistError)&&(Math.abs(leftSlave2_vel-Constants.kTestVelTarget)<Constants.kTestVelError)));
 	   
 	   
 	   
