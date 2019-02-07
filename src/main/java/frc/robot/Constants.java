@@ -14,7 +14,7 @@ public class Constants{
     public static double kMaxFeetPerSecond = 10.0;
     public static double kMaxAcceleration = 15.0;
     public static double kMaxJerk = 40.0;
-    public static double kWheelBaseFeet = 40.0 / 12.0;//25.75
+    public static double kWheelBaseFeet = 31.0 / 12.0;//25.75
     
     public static final double kLiftAMax = 20;
     public static final double kLiftVMax = 20;
@@ -143,10 +143,10 @@ public class Constants{
     public static final double kODesiredFinalMotor = 0.8;
     public static final double kSimpleArcTolerance = 10.0;
 
-    public static final double kPathFollowKa = 0.05;
-    public static final double kPathFollowKv = 0.005;//0.0029;
-    public static final double kPathFollowKp = 0.00005;
-    public static final double kPathFollowKg = 0.0005;
+    public static final double kPathFollowKa = 0.065;
+    public static final double kPathFollowKv = 0.0035;//0.0029;
+    public static final double kPathFollowKp = 0.0005;
+    public static final double kPathFollowKg = 0.025;
 
     public static final double kPathHoldKp = 0.0005;
     public static final double kPathHoldKg = 0.0001;

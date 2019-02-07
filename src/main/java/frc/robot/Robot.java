@@ -18,6 +18,7 @@ import frc.robot.commands.DriveDist;
 import frc.robot.commands.TurnToAngle;
 import frc.robot.loops.Looper;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.Drive.DriveControlState;
 import frc.robot.util.CrashTracker;
 import frc.robot.util.DriveSignal;
 import frc.robot.util.VisionMath;
@@ -74,10 +75,8 @@ public class Robot extends TimedRobot {
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
 			OI.getInstance();
-			long startTime = System.nanoTime();
-			Robot.getDrive().setDesiredArc(50, -35);
-			long endTime = System.nanoTime();
-			System.out.println("pathWriteTime: "+(startTime-endTime)/1000000.0);
+
+
 			
 		    //CameraServer.getInstance().startAutomaticCapture();
 		} catch (Throwable t) {
@@ -183,6 +182,22 @@ public class Robot extends TimedRobot {
 			SmartDashboard.putNumber("newR", r);
 			SmartDashboard.putNumber("newX", vm.findRobotX(xCam, yCam));
 			SmartDashboard.putNumber("newY", vm.findRobotY(xCam, yCam));
+			
+			double xRobot = vm.findRobotX(xCam, yCam);
+			double yRobot = vm.findRobotY(xCam, yCam);
+			yRobot = -20;
+
+			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);
+			theta = Math.atan((Math.abs(yRobot)/Math.abs(xRobot)));
+			if(yRobot>0){
+				theta *= -1.0;
+			}
+			radius = Math.abs(xRobot) / Math.cos(theta);
+			
+			theta *= (180.0 / Math.PI);
+			radius += halfWheelBase;
+			SmartDashboard.putNumber("radius",radius);
+			SmartDashboard.putNumber("theta",theta);
 
 			allPeriodic();
 		} catch (Throwable t) {
@@ -210,14 +225,37 @@ public class Robot extends TimedRobot {
 		return pathsRan;
 	}
 	int delayCount;
+	double radius,theta;
 	@Override
 	public void autonomousInit() {
 		try {
 			CrashTracker.logAutonomousInit();
 			// Start the subsystem loops.
 			mEnabledLooper.start();
+			VisionMath vm = new VisionMath();
+			double r = vm.findR();
+			double xCam = vm.findX(r);
+			double yCam = vm.findY(r);
+			double xRobot = vm.findRobotX(xCam, yCam);
+			double yRobot = vm.findRobotY(xCam, yCam);
+			SmartDashboard.putNumber("newR", r);
+			SmartDashboard.putNumber("newX", xRobot);
+			SmartDashboard.putNumber("newY", yRobot);
+			yRobot = -20;
 
-			//Drive.getInstance().startSimpleVisionDrive();
+			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);
+			theta = Math.atan((Math.abs(yRobot)/Math.abs(xRobot)));
+			if(yRobot>0){
+				theta *= -1.0;
+			}
+			radius = Math.abs(xRobot) / Math.cos(theta);
+			
+			theta *= (180.0 / Math.PI);
+			radius += halfWheelBase;
+			SmartDashboard.putNumber("radius",radius);
+			SmartDashboard.putNumber("theta",theta);
+
+			Robot.getDrive().setDesiredArc(radius, theta);
     		Robot.getDrive().startPath();
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
@@ -237,10 +275,19 @@ public class Robot extends TimedRobot {
 	 * This function is called periodically while the robot is in Autonomous mode.
 	 */
 	private boolean m_autonomousPeriodic_loggedError = false;
+	boolean done = false;
 	@Override
 	public void autonomousPeriodic() {
 		try {
 			allPeriodic();
+
+			if(getDrive().getState() != DriveControlState.PATH_FOLLOWING){
+				if(done==false){
+					Robot.getDrive().setDesiredArc(radius, -theta);
+					Robot.getDrive().startPath();
+					done = true;
+				}
+			}
 			
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousPeriodic");

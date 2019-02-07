@@ -16,7 +16,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 import frc.robot.util.Gyro;
-import frc.robot.util.ReflectingCSVWriter;
+import frc.robot.util.AsyncStructuredLogger;
 import jaci.pathfinder.Trajectory;
 import jaci.pathfinder.Trajectory.Segment;
 
@@ -32,6 +32,7 @@ import frc.robot.RobotMap;
 import frc.robot.loops.Loop;
 import frc.robot.loops.Looper;
 import frc.robot.util.ArcMath;
+import frc.robot.util.AsyncStructuredLogger;
 import frc.robot.util.DriveSignal;
 
 public class Drive extends Subsystem {
@@ -159,8 +160,8 @@ public class Drive extends Subsystem {
     private boolean mIsBrakeMode;
 
     // Logging
-    private DebugOutput mDebugOutput;
-    private final ReflectingCSVWriter<DebugOutput> mCSVWriter;
+    private DriveDebugOutput mDebugOutput;
+    private final AsyncStructuredLogger<DriveDebugOutput> mCSVWriter;
     
 	private double mDrive,mTurn;
 	
@@ -561,9 +562,8 @@ public class Drive extends Subsystem {
         mIsBrakeMode = true;
         setBrakeMode(false);
 
-        mDebugOutput = new DebugOutput();
-        mCSVWriter = new ReflectingCSVWriter<DebugOutput>("/home/lvuser/DriveLog.csv",
-                DebugOutput.class);
+        mDebugOutput = new DriveDebugOutput();
+        mCSVWriter = new AsyncStructuredLogger<DriveDebugOutput>("DriveLog",DriveDebugOutput.class);
         
         _drive = new DifferentialDrive(mLeftMaster, mRightMaster);
         
@@ -620,7 +620,7 @@ public class Drive extends Subsystem {
 		SmartDashboard.putNumber("gyro pos", Gyro.getYaw());
     }
     
-    public class DebugOutput{
+    /*public class DebugOutput{
     	public long sysTime;
     	public String driveMode;
     	public double gyroYaw;
@@ -653,7 +653,7 @@ public class Drive extends Subsystem {
     	public boolean rightHasResetOccurred;
     	public boolean leftIsSafetyEnabled;
     	public boolean rightIsSafetyEnabled;
-    }
+    }*/
     
     private void logValues(){
     	mDebugOutput.sysTime = System.nanoTime()-startTime;
@@ -690,7 +690,7 @@ public class Drive extends Subsystem {
     	mDebugOutput.rightHasResetOccurred = mRightMaster.hasResetOccurred();
     	mDebugOutput.leftIsSafetyEnabled = mLeftMaster.isSafetyEnabled();
     	mDebugOutput.rightIsSafetyEnabled = mRightMaster.isSafetyEnabled();
-		mCSVWriter.add(mDebugOutput);
+		mCSVWriter.queueData(mDebugOutput);
     }
 
     public synchronized void resetEncoders() {
@@ -715,14 +715,14 @@ public class Drive extends Subsystem {
 
        @Override
     public void writeToLog() {
-        mCSVWriter.write();
+        //mCSVWriter.write();
     }
 
    public boolean testSubsystem(){
 
 	   boolean all_ok = false;
 	   try{
-		   FileWriter w = new FileWriter(new File("/home/lvuser/testLog.csv"));
+		   FileWriter w = null;//new FileWriter(new File("/home/lvuser/testLog.csv"));
 	   all_ok = true;
 
 	   _drive.setSafetyEnabled(false);

@@ -34,7 +34,7 @@ public class ArcMath {
             double x = 0.5 * m_acceleration * ((i * 0.01)*(i * 0.01));
             double yaw = lastYaw + deltaYaw;
 
-			outerPath[i] = new Segment(0.01, 0, 0, x, v, m_acceleration, 0, yaw);
+			outerPath[i] = new Segment(0.01, 0, 0, x, v, m_acceleration, 0, (-yaw*Math.PI/180.0));
 			xMax = x;
             vMax = v;
             lastYaw = yaw;
@@ -44,7 +44,7 @@ public class ArcMath {
 			double x = xMax + (vMax*(i*0.01)) - (0.5 * m_acceleration * ((i * 0.01)*(i * 0.01)));
             double yaw = lastYaw + deltaYaw;
 
-			outerPath[i+numIntervals] = new Segment(0.01, 0, 0, x, v, -m_acceleration, 0, yaw);
+			outerPath[i+numIntervals] = new Segment(0.01, 0, 0, x, v, -m_acceleration, 0, (-yaw*Math.PI/180.0));
             lastYaw = yaw;
         }
         

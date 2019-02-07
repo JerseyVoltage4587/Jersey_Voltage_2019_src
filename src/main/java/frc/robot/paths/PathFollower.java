@@ -11,6 +11,7 @@ import frc.robot.util.Gyro;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import jaci.pathfinder.Trajectory;
+import frc.robot.util.AsyncStructuredLogger;
 
 public class PathFollower {
 
@@ -25,7 +26,9 @@ public class PathFollower {
 	double Kp = Constants.kPathFollowKp;
 	double Kg = Constants.kPathFollowKg;
 	
-	FileWriter m_logWriter=null;
+	//FileWriter m_logWriter=null;
+    private PathDebugOutput mDebugOutput;
+	private AsyncStructuredLogger<PathDebugOutput> mCSVWriter;
 	String m_namePath;
 	Trajectory m_leftPath;
 	Trajectory m_rightPath;
@@ -110,14 +113,8 @@ public class PathFollower {
     // Called just before this Command runs the first time
     public void initialize() {
     	quit = false;
-		
-		try {
-			m_logWriter = new FileWriter("/home/lvuser/" + m_namePath +"Log.csv", false);
-			m_logWriter.write("aLeft,vLeft,xLeft,aRight,vRight,xRight,desiredAngle,currentAngle,realLeftEncoder,realRightEncoder,leftMotorLevel,rightMotorLevel,leftAcc,leftVel,leftPos,leftG,leftMotorLevel,rightAcc,rightVel,rightPos,rightG,rightMotorLevel,System.nanoTime()" + "\n");
-		} catch ( IOException e ) {
-			System.out.println(e);
-			m_logWriter = null;
-		}
+		mDebugOutput = new PathDebugOutput();
+		mCSVWriter = new AsyncStructuredLogger<PathDebugOutput>("PathLog",false,PathDebugOutput.class);
 		
     	m_startEncoderLeft = Robot.getDrive().getLeftEnc();
     	m_startEncoderRight = Robot.getDrive().getRightEnc();
@@ -222,16 +219,7 @@ public class PathFollower {
         		//SmartDashboard.putNumber("left motor set to: ", leftMotorLevel);
         		//SmartDashboard.putNumber("right motor set to: ", -rightMotorLevel);
             	
-        		if(m_logWriter != null)
-        		{
-        			try{
-						m_logWriter.write((int)leftMotorLevel*1000);
-						m_logWriter.write((int)rightMotorLevel*1000);
-        				//m_logWriter.write(aLeft + "," + vLeft + "," + xLeft + "," + aRight + "," + vRight + "," + xRight + "," + desiredAngle + "," + currentAngle + "," + realLeftEncoder + "," + realRightEncoder + "," + leftMotorLevel + "," + rightMotorLevel +"," + time + "\n");
-        			}catch(Exception e){
-        				
-        			}
-				}
+        		logValues();
 				
         	
     }
@@ -243,14 +231,41 @@ public class PathFollower {
 
     // Called once after isFinished returns true
     protected void end() {
-    	try
-    	{
-    		m_logWriter.close();
-    	}
-    	catch(Exception e)
-    	{
-    		
-    	}
+    	mCSVWriter.flush();
+	}
+	
+	/*public class DebugOutput{
+    	public double time;
+    	public double aLeft;
+    	public double vLeft;
+    	public double xLeft;
+    	public double aRight;
+    	public double vRight;
+    	public double xRight;
+    	public double desiredAngle;
+    	public double currentAngle;
+    	public double realLeftEncoder;
+    	public double realRightEncoder;
+    	public double leftMotorLevel;
+    	public double rightMotorLevel;
+	}*/
+	
+	private void logValues(){
+		mDebugOutput.time = System.nanoTime();
+		mDebugOutput.aLeft = getALeft();
+		mDebugOutput.vLeft = getVLeft();
+		mDebugOutput.xLeft = getXLeft();
+		mDebugOutput.aRight = getARight();
+		mDebugOutput.vRight = getVRight();
+		mDebugOutput.xRight = getXRight();
+		mDebugOutput.desiredAngle = getDesiredAngle();
+		mDebugOutput.currentAngle = Gyro.getYaw();
+		mDebugOutput.realLeftEncoder = Robot.getDrive().getLeftEnc();
+		mDebugOutput.realRightEncoder = Robot.getDrive().getRightEnc();
+		mDebugOutput.leftMotorLevel = getLeftMotorSetting();
+		mDebugOutput.rightMotorLevel = getRightMotorSetting();
+
+    	mCSVWriter.queueData(mDebugOutput);
     }
 
 }
