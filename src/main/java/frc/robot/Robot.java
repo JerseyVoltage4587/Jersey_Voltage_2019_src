@@ -175,6 +175,7 @@ public class Robot extends TimedRobot {
 	@Override
 	public void disabledPeriodic() {
 		try {
+			long startTime = System.nanoTime();
 			VisionMath vm = new VisionMath();
 			double r = vm.findR();
 			double xCam = vm.findX(r);
@@ -185,19 +186,32 @@ public class Robot extends TimedRobot {
 			
 			double xRobot = vm.findRobotX(xCam, yCam);
 			double yRobot = vm.findRobotY(xCam, yCam);
-			yRobot = -20;
+			double angleToTarget = (Math.abs(yRobot)<0.01) ? 0 : Math.atan(xRobot/yRobot);
+			angleToTarget *= 180.0 / Math.PI;
+			double desiredHeading = Math.signum(angleToTarget) * (90 - Math.abs(angleToTarget));
+			SmartDashboard.putNumber("angleToTarget", angleToTarget);
+			SmartDashboard.putNumber("desiredHeading", desiredHeading);
+			long endTime = System.nanoTime();
+			SmartDashboard.putNumber("visionCalcTime", (endTime-startTime)/1000000.0);
 
 			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);
-			theta = Math.atan((Math.abs(yRobot)/Math.abs(xRobot)));
-			if(yRobot>0){
-				theta *= -1.0;
-			}
-			radius = Math.abs(xRobot) / Math.cos(theta);
+			double degreesToTurn = 90 - Gyro.getYaw();
+			double hdg = -Gyro.getYaw() * Math.PI / 180.0;
+			double camToBumper = 12;
+
+			double xFrontCorner = (xRobot) - (halfWheelBase*Math.sin(hdg)) + (camToBumper * Math.cos(hdg));
+			double yFrontCorner = (yRobot) + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(hdg)) + (camToBumper * Math.sin(hdg)));
+
+			SmartDashboard.putNumber("xFrontCorner", xFrontCorner);
+			SmartDashboard.putNumber("yFrontCorner", yFrontCorner);
+			double xGoal = -24;
+			double yGoal = -Constants.kWheelBaseFeet*12/2.0;
+			double radiusTurn = Math.abs(xFrontCorner - xGoal)/Math.tan(hdg) + (yFrontCorner - yGoal);
+			SmartDashboard.putNumber("radius",radiusTurn);
+			SmartDashboard.putNumber("degrees",degreesToTurn);
+
+			//Robot.getDrive().setDesiredArc(radiusTurn, degreesToTurn);
 			
-			theta *= (180.0 / Math.PI);
-			radius += halfWheelBase;
-			SmartDashboard.putNumber("radius",radius);
-			SmartDashboard.putNumber("theta",theta);
 
 			allPeriodic();
 		} catch (Throwable t) {
@@ -241,21 +255,22 @@ public class Robot extends TimedRobot {
 			SmartDashboard.putNumber("newR", r);
 			SmartDashboard.putNumber("newX", xRobot);
 			SmartDashboard.putNumber("newY", yRobot);
-			yRobot = -20;
 
 			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);
-			theta = Math.atan((Math.abs(yRobot)/Math.abs(xRobot)));
-			if(yRobot>0){
-				theta *= -1.0;
-			}
-			radius = Math.abs(xRobot) / Math.cos(theta);
-			
-			theta *= (180.0 / Math.PI);
-			radius += halfWheelBase;
-			SmartDashboard.putNumber("radius",radius);
-			SmartDashboard.putNumber("theta",theta);
+			double degreesToTurn = 90 - Gyro.getYaw();
+			double hdg = -Gyro.getYaw() * Math.PI / 180.0;
+			double camToBumper = 12;
 
-			Robot.getDrive().setDesiredArc(radius, theta);
+			double xFrontCorner = (xRobot) - (halfWheelBase*Math.sin(hdg)) + (camToBumper * Math.cos(hdg));
+			double yFrontCorner = (yRobot) + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(hdg)) + (camToBumper * Math.sin(hdg)));
+
+			double xGoal = -24;
+			double yGoal = -Constants.kWheelBaseFeet*12/2.0;
+			double radiusTurn = Math.abs(xFrontCorner - xGoal)/Math.tan(hdg) + (yFrontCorner - yGoal);
+
+			Robot.getDrive().setDesiredArc(radiusTurn, -Gyro.getYaw());
+			//Robot.getDrive().setDesiredArc(76, -Gyro.getYaw());
+			//Robot.getDrive().startSimpleVisionDrive();
     		Robot.getDrive().startPath();
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
@@ -283,8 +298,7 @@ public class Robot extends TimedRobot {
 
 			if(getDrive().getState() != DriveControlState.PATH_FOLLOWING){
 				if(done==false){
-					Robot.getDrive().setDesiredArc(radius, -theta);
-					Robot.getDrive().startPath();
+					Robot.getDrive().startSimpleVisionDrive();
 					done = true;
 				}
 			}

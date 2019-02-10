@@ -2,6 +2,7 @@ package frc.robot.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -19,7 +20,7 @@ public class AsyncAdHocLogger extends CrashTrackingRunnable
     private StringBuilder qdbg = null;
     private StringBuilder pdbg = null;
 
-    PrintWriter m_writer = null;
+    PrintStream m_writer = null;
 
     private String m_baseName = null;
 
@@ -62,14 +63,18 @@ public class AsyncAdHocLogger extends CrashTrackingRunnable
         qdbg = new StringBuilder();
         pdbg = new StringBuilder();
         try {
-            StringBuilder file_name = new StringBuilder();
-            file_name.append(baseName);
-            if ( forceUnique ) {
-                file_name.append("-").append(System.nanoTime());
+            if(baseName.equals("")){
+                m_writer = System.out;
+            }else{
+                StringBuilder file_name = new StringBuilder();
+                file_name.append(baseName);
+                if ( forceUnique ) {
+                    file_name.append("-").append(System.nanoTime());
+                }
+                file_name.append(".txt");
+                File log_path = new File ( LogDirectory, file_name.toString() );
+                m_writer = new PrintStream ( log_path );
             }
-            file_name.append(".txt");
-            File log_path = new File ( LogDirectory, file_name.toString() );
-            m_writer = new PrintWriter ( log_path );
         } catch ( FileNotFoundException ex ) {
             System.err.println("AsyncAdHocLogger("+m_baseName+")  E R R O R !!");
             System.err.println("... Unable to create log file!");

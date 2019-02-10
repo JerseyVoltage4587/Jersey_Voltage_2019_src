@@ -8,6 +8,8 @@
 package frc.robot;
 
 import frc.robot.util.JoyButton;
+import frc.robot.commands.StartVisionDrive;
+import frc.robot.commands.StartOpenLoop;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.Button;
@@ -82,7 +84,8 @@ public class OI {
     	count3Button2 	= new JoystickButton(driverStation, 8);
     	
     	//System.out.println("OI start");  println is evil
-    	
+    	buttonA1.whenPressed(new StartVisionDrive());
+    	buttonB1.whenPressed(new StartOpenLoop());
     	
 	}
 

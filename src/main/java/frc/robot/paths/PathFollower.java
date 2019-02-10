@@ -27,8 +27,8 @@ public class PathFollower {
 	double Kg = Constants.kPathFollowKg;
 	
 	//FileWriter m_logWriter=null;
-    private PathDebugOutput mDebugOutput;
-	private AsyncStructuredLogger<PathDebugOutput> mCSVWriter;
+    private DebugOutput mDebugOutput;
+	private AsyncStructuredLogger<DebugOutput> mCSVWriter;
 	String m_namePath;
 	Trajectory m_leftPath;
 	Trajectory m_rightPath;
@@ -113,8 +113,8 @@ public class PathFollower {
     // Called just before this Command runs the first time
     public void initialize() {
     	quit = false;
-		mDebugOutput = new PathDebugOutput();
-		mCSVWriter = new AsyncStructuredLogger<PathDebugOutput>("PathLog",false,PathDebugOutput.class);
+		mDebugOutput = new DebugOutput();
+		mCSVWriter = new AsyncStructuredLogger<DebugOutput>("PathLog",false,DebugOutput.class);
 		
     	m_startEncoderLeft = Robot.getDrive().getLeftEnc();
     	m_startEncoderRight = Robot.getDrive().getRightEnc();
@@ -234,7 +234,7 @@ public class PathFollower {
     	mCSVWriter.flush();
 	}
 	
-	/*public class DebugOutput{
+	public static class DebugOutput{
     	public double time;
     	public double aLeft;
     	public double vLeft;
@@ -248,7 +248,7 @@ public class PathFollower {
     	public double realRightEncoder;
     	public double leftMotorLevel;
     	public double rightMotorLevel;
-	}*/
+	}
 	
 	private void logValues(){
 		mDebugOutput.time = System.nanoTime();

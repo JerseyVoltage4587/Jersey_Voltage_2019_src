@@ -16,6 +16,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 import frc.robot.util.Gyro;
+import frc.robot.util.VisionMath;
 import frc.robot.util.AsyncStructuredLogger;
 import jaci.pathfinder.Trajectory;
 import jaci.pathfinder.Trajectory.Segment;
@@ -32,6 +33,7 @@ import frc.robot.RobotMap;
 import frc.robot.loops.Loop;
 import frc.robot.loops.Looper;
 import frc.robot.util.ArcMath;
+import frc.robot.util.AsyncAdHocLogger;
 import frc.robot.util.AsyncStructuredLogger;
 import frc.robot.util.DriveSignal;
 
@@ -65,7 +67,8 @@ public class Drive extends Subsystem {
     public DriveControlState getState(){
     	return mDriveControlState;
     }
-
+	private int m_leftEncoderLast,m_rightEncoderLast = 0;
+	private long m_lastTime;
     public int getLeftEnc(){
     	return mLeftMaster.getSelectedSensorPosition(0);
     }
@@ -160,8 +163,8 @@ public class Drive extends Subsystem {
     private boolean mIsBrakeMode;
 
     // Logging
-    private DriveDebugOutput mDebugOutput;
-    private final AsyncStructuredLogger<DriveDebugOutput> mCSVWriter;
+    private DebugOutput mDebugOutput;
+    private final AsyncStructuredLogger<DebugOutput> mCSVWriter;
     
 	private double mDrive,mTurn;
 	
@@ -234,7 +237,8 @@ public class Drive extends Subsystem {
     		mDriveControlState = DriveControlState.TEST_MODE;
     	}
     }
-    
+	
+	AsyncAdHocLogger asyncAdHocLogger;
     int iCall = 0;
     private final Loop mLoop = new Loop() {
 
@@ -246,6 +250,7 @@ public class Drive extends Subsystem {
             	startTime = System.nanoTime();
                 setOpenLoop(DriveSignal.NEUTRAL);
 				setBrakeMode(false);
+				asyncAdHocLogger = new AsyncAdHocLogger("");
             }
         }
 
@@ -274,10 +279,28 @@ public class Drive extends Subsystem {
                 	mDriveControlState = DriveControlState.OPEN_LOOP;
 					break;
 				case SIMPLE_VISION_DRIVE:
+					/*mDrive = OI.getInstance().getDrive();
+					mTurn = OI.getInstance().getTurn();
+					NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+					NetworkTableEntry tx = limelightTable.getEntry("tx");
+					double x = tx.getDouble(0.0);
+
+					if(Math.abs(mTurn) < 0.1){
+						mTurn = x * Constants.kVisionXToMotorStrong;
+					}else{
+						mTurn += x * Constants.kVisionXToMotorWeak;
+					}
+
+					_drive.arcadeDrive(mDrive, mTurn, false);//bool = squaredInputs
+					//mLeftMaster.setInverted(false);
+					invertRightSide(false);
+					_drive.setSafetyEnabled(true);*/
+					_drive.setSafetyEnabled(false);
 					doSimpleVisionDrive();
 					break;
 				case VISION_DRIVE:
-					//doVisionDrive();
+					_drive.setSafetyEnabled(false);
+					doVisionDrive();
 					break;
 				case TURN_ANGLE:
 					doTurnAngle();
@@ -289,7 +312,10 @@ public class Drive extends Subsystem {
                     //System.out.println("Unexpected drive control state: " + mDriveControlState);
                     break;
                 }
-            }
+			}
+			m_leftEncoderLast = getLeftEnc();
+			m_rightEncoderLast = getRightEnc();
+			m_lastTime = System.nanoTime();
         	logValues();
         }
 
@@ -299,33 +325,103 @@ public class Drive extends Subsystem {
             mCSVWriter.flush();
         }
 	};
+	double m_lastLeftVel=0,m_lastRightVel=0;
+	private void doVisionDrive(){
+
+		double r = vm.findR();
+		double xCam = vm.findX(r);
+		double yCam = vm.findY(r);
+		double xRobot = vm.findRobotX(xCam, yCam);
+		double yRobot = vm.findRobotY(xCam, yCam);
+		double left = 0;
+		double right = 0;
+		long nowTime = System.nanoTime();
+		double leftVel = ((getLeftEnc() - m_leftEncoderLast) * Constants.kInchesPerTic / 12.0) / ((nowTime-m_lastTime) / 1000000000.0);
+		double rightVel = ((getRightEnc() - m_rightEncoderLast) * Constants.kInchesPerTic / 12.0) / ((nowTime-m_lastTime) / 1000000000.0);
+
+		if(leftVel == 0.0){leftVel = m_lastLeftVel;}
+		if(rightVel == 0.0){rightVel = m_lastRightVel;}
+		asyncAdHocLogger.q("leftEnc: ").q(getLeftEnc()).q(" leftEncLast: ").q(m_leftEncoderLast).go();
+
+        NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+		NetworkTableEntry tv = limelightTable.getEntry("tv");
+        double v = tv.getDouble(0.0);
+
+		if(Math.abs(yRobot) < (1.0/6.0)*Math.abs(xRobot)){
+			//safe zone
+			double angleToTarget = (Math.abs(yRobot)<0.01) ? 0 : Math.atan(xRobot/yRobot);
+			angleToTarget *= 180.0 / Math.PI;
+			double desiredHeading = Math.signum(angleToTarget) * (90 - Math.abs(angleToTarget));
+			double deltaAngle = desiredHeading - Gyro.getYaw();
+			if(deltaAngle<-180){deltaAngle+=360;}
+			if(deltaAngle>180){deltaAngle-=360;}
+
+			if(Math.abs(deltaAngle) < Constants.kVisionDeltaAngleTolerance){
+				leftVel = Math.max(leftVel, rightVel);
+				rightVel = leftVel;
+			}else{
+				double acc = Math.signum(deltaAngle) * Constants.kMaxAcceleration * 0.01;
+				leftVel += acc;
+				rightVel -= acc;
+			}
+			double averageVel = (leftVel + rightVel) / 2.0;
+			double timeToStop = averageVel / Constants.kMaxAcceleration;
+			double distToStop = averageVel * timeToStop / 2.0;
+			if(Math.abs(xRobot) <= distToStop){
+				//need to slow down
+				leftVel -= Constants.kMaxAcceleration * 0.01;
+				rightVel -= Constants.kMaxAcceleration * 0.01;
+			}
+
+			leftVel *= 12 / Constants.kInchesPerTic / 1000 * 10;//convert ft/sec to ticks/10ms
+			rightVel *= 12 / Constants.kInchesPerTic / 1000 * 10;
+			left = leftVel * Constants.kPathFollowKv;
+			right = rightVel * Constants.kPathFollowKv;
+			double leftMin = 0;
+			double rightMin = 0;
+			if(Math.signum(deltaAngle)<0){
+				leftMin = 0.1;
+				rightMin = 0.2;
+			}else{
+				leftMin = 0.2;
+				rightMin = 0.1;
+			}
+			if(left<leftMin){left=leftMin;}
+			if(right<rightMin){right=rightMin;}
+		}
+		if(v==1){//have target
+			setMotorLevels(left, -right);
+		}
+		m_lastLeftVel = leftVel;
+		m_lastRightVel = rightVel;
+	}
 
 	private void doSimpleVisionDrive(){
 		NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry ty = limelightTable.getEntry("ty");
-		double y = ty.getDouble(0.0);
-		double distToTarget = (y * Constants.kInchesPerVisionY) - 7;
-		SmartDashboard.putNumber("distToTarget", distToTarget);
-		
-		NetworkTableEntry tx = limelightTable.getEntry("tx");
-		double x = tx.getDouble(0.0);
-		
-		NetworkTableEntry ta = limelightTable.getEntry("ta");
-		double a = ta.getDouble(0.0);
 		NetworkTableEntry tv = limelightTable.getEntry("tv");
 		double v = tv.getDouble(0.0);
+		NetworkTableEntry tx = limelightTable.getEntry("tx");
+		double x = tx.getDouble(0.0);
+
+		VisionMath vm = new VisionMath();
+		double r = vm.findR();
+		double xCam = vm.findX(r);
+		double yCam = vm.findY(r);
+		double xRobot = vm.findRobotX(xCam, yCam);
+		double yRobot = vm.findRobotY(xCam, yCam);
+		double distRobot = Math.sqrt((xRobot*xRobot)+(yRobot*yRobot));
 
 		double left = 0;
 		double right = 0;
 
-		left = (distToTarget * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);
-		right = (distToTarget * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);
+		left = (distRobot * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);
+		right = (distRobot * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);
 
 		if(Math.abs(x) < Constants.kVisionXTolerance){
 			//System.out.println("x: "+x+" < XTolerance: "+Constants.kVisionXTolerance);
 			
 				double desiredDist = 1.0;//Constants.kVisionDistToStop - ((10 - a) * 0.9);
-				if(y > desiredDist){
+				if(xRobot > desiredDist){
 					//setOpenLoop(DriveSignal.NEUTRAL);
 					left=0;
 					right=0;
@@ -336,9 +432,10 @@ public class Drive extends Subsystem {
 			left=0;
 			right=0;
 		}
-		//System.out.println(left+","+right);
+		System.out.println(left+","+right);
 		setMotorLevels(left, -right);
 	}
+
 
 	private double lastG = 0;
 	private double lastTime = 0;
@@ -491,7 +588,7 @@ public class Drive extends Subsystem {
     	mLeftMaster.set(ControlMode.PercentOutput, left);
     	mRightMaster.set(ControlMode.PercentOutput, right);
     }
-
+	VisionMath vm;
 	private Drive() {
         // Start all Talons in open loop mode.
         mLeftMaster = new WPI_TalonSRX(RobotMap.DRIVE_LEFT_TALON);
@@ -562,9 +659,11 @@ public class Drive extends Subsystem {
         mIsBrakeMode = true;
         setBrakeMode(false);
 
-        mDebugOutput = new DriveDebugOutput();
-        mCSVWriter = new AsyncStructuredLogger<DriveDebugOutput>("DriveLog",DriveDebugOutput.class);
+        mDebugOutput = new DebugOutput();
+        mCSVWriter = new AsyncStructuredLogger<DebugOutput>("DriveLog" ,DebugOutput.class);
         
+		vm = new VisionMath();
+
         _drive = new DifferentialDrive(mLeftMaster, mRightMaster);
         
         
@@ -620,7 +719,7 @@ public class Drive extends Subsystem {
 		SmartDashboard.putNumber("gyro pos", Gyro.getYaw());
     }
     
-    /*public class DebugOutput{
+    public static class DebugOutput{
     	public long sysTime;
     	public String driveMode;
     	public double gyroYaw;
@@ -653,7 +752,7 @@ public class Drive extends Subsystem {
     	public boolean rightHasResetOccurred;
     	public boolean leftIsSafetyEnabled;
     	public boolean rightIsSafetyEnabled;
-    }*/
+    }
     
     private void logValues(){
     	mDebugOutput.sysTime = System.nanoTime()-startTime;
