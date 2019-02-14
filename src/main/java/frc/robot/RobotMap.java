@@ -11,6 +11,7 @@ public class RobotMap {
 	//CAN ID's
 	public static final int DRIVE_RIGHT_TALON = 2;
 	public static final int DRIVE_RIGHT_VICTOR_1 = 21;
+	public static final int DRIVE_RIGHT_TALON_SLAVE = 21;
 	public static final int DRIVE_RIGHT_VICTOR_2 = 22;
 	public static final int DRIVE_LEFT_TALON = 1;
 	public static final int DRIVE_LEFT_VICTOR_1 = 11;

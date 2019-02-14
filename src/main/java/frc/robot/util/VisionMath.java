@@ -9,7 +9,15 @@ public class VisionMath {
     private double zRobot = Constants.kZRobotInches;
     private double cameraRotation = Constants.kCameraRotation;
 
-    public double findR(){
+    private double m_xRobot,m_yRobot;
+    public double getRobotX(){
+        return m_xRobot;
+    }
+    public double getRobotY(){
+        return m_yRobot;
+    }
+
+    public void findRobotPos(){
         NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 		NetworkTableEntry txe = limelightTable.getEntry("tx");
         double tx = txe.getDouble(0.0);
@@ -22,47 +30,16 @@ public class VisionMath {
             (Math.cos(ty)*Math.cos(cameraRotation))
             - (Math.sin(ty)*Math.cos(tx)*Math.sin(cameraRotation))
             );
-        return r;
-    }
 
-    public double findX(double r){
-        NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry txe = limelightTable.getEntry("tx");
-        double tx = txe.getDouble(0.0);
-        tx *= (Math.PI/180.0);
-		NetworkTableEntry tye = limelightTable.getEntry("ty");
-        double ty = tye.getDouble(0.0) - 90;
-        ty *= (Math.PI/180.0);
-
-        double x = r * (
+        double xCam = r * (
             (Math.sin(ty)*Math.cos(tx)*Math.cos(cameraRotation))
             +(Math.cos(ty)*Math.sin(cameraRotation))
         );
-        return x;
-    }
 
-    public double findY(double r){
-        NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry txe = limelightTable.getEntry("tx");
-        double tx = txe.getDouble(0.0);
-        tx *= (Math.PI/180.0);
-		NetworkTableEntry tye = limelightTable.getEntry("ty");
-        double ty = tye.getDouble(0.0) - 90;
-        ty *= (Math.PI/180.0);
+        double yCam = r * (Math.sin(ty)*Math.sin(tx));
 
-        double y = r * (Math.sin(ty)*Math.sin(tx));
-        return y;
-    }
-
-    public double findRobotX(double xCam, double yCam){
         double g = Gyro.getYaw() * (Math.PI/180.0);
-        double x = (xCam * Math.cos(g)) - (yCam * Math.sin(g));
-        return x;
-    }
-
-    public double findRobotY(double xCam, double yCam){
-        double g = Gyro.getYaw() * (Math.PI/180.0);
-        double y = (xCam * Math.sin(g)) + (yCam * Math.cos(g));
-        return y;
+        m_yRobot = (xCam * Math.sin(g)) + (yCam * Math.cos(g));
+        m_xRobot = (xCam * Math.cos(g)) - (yCam * Math.sin(g));
     }
 }

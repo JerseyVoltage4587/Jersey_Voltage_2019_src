@@ -155,8 +155,8 @@ public class Drive extends Subsystem {
     private DriveControlState mDriveControlState = DriveControlState.OPEN_LOOP;
 
     // Hardware
-    private final WPI_TalonSRX mLeftMaster, mRightMaster;
-    private final WPI_VictorSPX _leftSlave1, _leftSlave2, _rightSlave1, _rightSlave2;
+    private final WPI_TalonSRX mLeftMaster, mRightMaster, _rightSlave1;
+    private final WPI_VictorSPX _leftSlave1, _leftSlave2, _rightSlave2;
     private final Gyro mNavXBoard;
 
     // Hardware states
@@ -328,11 +328,9 @@ public class Drive extends Subsystem {
 	double m_lastLeftVel=0,m_lastRightVel=0;
 	private void doVisionDrive(){
 
-		double r = vm.findR();
-		double xCam = vm.findX(r);
-		double yCam = vm.findY(r);
-		double xRobot = vm.findRobotX(xCam, yCam);
-		double yRobot = vm.findRobotY(xCam, yCam);
+		vm.findRobotPos();
+		double xRobot = vm.getRobotX();
+		double yRobot = vm.getRobotY();
 		double left = 0;
 		double right = 0;
 		long nowTime = System.nanoTime();
@@ -403,12 +401,9 @@ public class Drive extends Subsystem {
 		NetworkTableEntry tx = limelightTable.getEntry("tx");
 		double x = tx.getDouble(0.0);
 
-		VisionMath vm = new VisionMath();
-		double r = vm.findR();
-		double xCam = vm.findX(r);
-		double yCam = vm.findY(r);
-		double xRobot = vm.findRobotX(xCam, yCam);
-		double yRobot = vm.findRobotY(xCam, yCam);
+		vm.findRobotPos();
+		double xRobot = vm.getRobotX();
+		double yRobot = vm.getRobotY();
 		double distRobot = Math.sqrt((xRobot*xRobot)+(yRobot*yRobot));
 
 		double left = 0;
@@ -617,7 +612,8 @@ public class Drive extends Subsystem {
 
 		mRightMaster.configMotionProfileTrajectoryPeriod(10, 10); 
 		
-        _rightSlave1 = new WPI_VictorSPX(RobotMap.DRIVE_RIGHT_VICTOR_1);
+        //_rightSlave1 = new WPI_VictorSPX(RobotMap.DRIVE_RIGHT_VICTOR_1);
+        _rightSlave1 = new WPI_TalonSRX(RobotMap.DRIVE_RIGHT_TALON_SLAVE);
         _rightSlave1.follow(mRightMaster);
         _rightSlave1.setNeutralMode(NeutralMode.Brake);
         _rightSlave2 = new WPI_VictorSPX(RobotMap.DRIVE_RIGHT_VICTOR_2);

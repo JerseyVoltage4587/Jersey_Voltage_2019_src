@@ -177,15 +177,12 @@ public class Robot extends TimedRobot {
 		try {
 			long startTime = System.nanoTime();
 			VisionMath vm = new VisionMath();
-			double r = vm.findR();
-			double xCam = vm.findX(r);
-			double yCam = vm.findY(r);
-			SmartDashboard.putNumber("newR", r);
-			SmartDashboard.putNumber("newX", vm.findRobotX(xCam, yCam));
-			SmartDashboard.putNumber("newY", vm.findRobotY(xCam, yCam));
+			vm.findRobotPos();
+			double xRobot = vm.getRobotX();
+			double yRobot = vm.getRobotY();
+			SmartDashboard.putNumber("xRobot", xRobot);
+			SmartDashboard.putNumber("yRobot", yRobot);
 			
-			double xRobot = vm.findRobotX(xCam, yCam);
-			double yRobot = vm.findRobotY(xCam, yCam);
 			double angleToTarget = (Math.abs(yRobot)<0.01) ? 0 : Math.atan(xRobot/yRobot);
 			angleToTarget *= 180.0 / Math.PI;
 			double desiredHeading = Math.signum(angleToTarget) * (90 - Math.abs(angleToTarget));
@@ -247,17 +244,13 @@ public class Robot extends TimedRobot {
 			// Start the subsystem loops.
 			mEnabledLooper.start();
 			VisionMath vm = new VisionMath();
-			double r = vm.findR();
-			double xCam = vm.findX(r);
-			double yCam = vm.findY(r);
-			double xRobot = vm.findRobotX(xCam, yCam);
-			double yRobot = vm.findRobotY(xCam, yCam);
-			SmartDashboard.putNumber("newR", r);
-			SmartDashboard.putNumber("newX", xRobot);
-			SmartDashboard.putNumber("newY", yRobot);
+			vm.findRobotPos();
+			double xRobot = vm.getRobotX();
+			double yRobot = vm.getRobotY();
+			SmartDashboard.putNumber("xRobot", xRobot);
+			SmartDashboard.putNumber("yRobot", yRobot);
 
 			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);
-			double degreesToTurn = 90 - Gyro.getYaw();
 			double hdg = -Gyro.getYaw() * Math.PI / 180.0;
 			double camToBumper = 12;
 

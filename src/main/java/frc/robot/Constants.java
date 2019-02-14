@@ -36,6 +36,9 @@ public class Constants{
     public static final double kVisionXToMotorWeak = 0.02;
     public static final double kVisionXToMotorStrong = 0.04;
     public static final double kVisionDeltaAngleTolerance = 1.0;//degrees
+    public static final double kVisionApproachDist = 2.0;//ft
+    public static final double kMinimumRadiusTurn = kWheelBaseFeet + 0.5;//ft
+    public static final double kCamToBumper = 12;//inches
 
     public static final double kVisionXTolerance = 1.5;
     public static final double kVisionYTolerance = 3.5;
