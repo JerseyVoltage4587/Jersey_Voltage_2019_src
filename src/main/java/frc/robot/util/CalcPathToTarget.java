@@ -16,7 +16,7 @@ public class CalcPathToTarget {
         return m_rightTrajectory;
     }
 
-    private double m_x, m_y;
+    private double m_xCenter, m_yCenter, m_xLeftCorner, m_yLeftCorner, m_xRightCorner, m_yRightCorner, m_hdg;
 
     VisionMath vm;
     CalcPathToTarget(){
@@ -91,14 +91,14 @@ public class CalcPathToTarget {
     private void calcPrepStage(){
         double actualRadius = Constants.kMinimumRadiusTurn;
         
-        double targetDist = (m_y - Constants.kVisionApproachDist) / 2.0;
-        double littleAngle = Math.atan((Constants.kMinimumRadiusTurn - m_x) / targetDist);//radians
-        double dashedLine = Math.sqrt((targetDist*targetDist) + ((Constants.kMinimumRadiusTurn - m_x)*(Constants.kMinimumRadiusTurn - m_x)));
+        double targetDist = (m_yCenter - Constants.kVisionApproachDist) / 2.0;
+        double littleAngle = Math.atan((Constants.kMinimumRadiusTurn - m_xCenter) / targetDist);//radians
+        double dashedLine = Math.sqrt((targetDist*targetDist) + ((Constants.kMinimumRadiusTurn - m_xCenter)*(Constants.kMinimumRadiusTurn - m_xCenter)));
         if(actualRadius > dashedLine * 0.9){
             actualRadius = dashedLine * 0.9;
         }
         double bigAngle = Math.asin(actualRadius / dashedLine);//radians
-        double theta = Math.abs(bigAngle - littleAngle) * Math.signum(m_x) * -1;
+        double theta = Math.abs(bigAngle - littleAngle) * Math.signum(m_xCenter) * -1;
 
         //first arc
 
@@ -110,35 +110,37 @@ public class CalcPathToTarget {
     
     public void calcPath(){
         vm.findRobotPos();
-        m_x = vm.getRobotX();
-        m_y = vm.getRobotY();
+        double x = vm.getRobotX();
+        double y = vm.getRobotY();
 
         double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);//inches
-		double degreesToTurn = 90 - Gyro.getYaw();
-		double hdg = -Gyro.getYaw() * Math.PI / 180.0;
 
-        double xFrontCenter = m_x + (Constants.kCamToBumper * Math.cos(hdg));
-        double yFrontCenter = m_y + (Constants.kCamToBumper * Math.sin(hdg));
+        m_hdg = -Gyro.getYaw() * Math.PI / 180.0;
+        m_xCenter = x + (Constants.kCamToBumper * Math.cos(m_hdg));
+        m_yCenter = y - (Constants.kCamToBumper * Math.sin(m_hdg));
+		m_xRightCorner =    m_xCenter - (halfWheelBase*Math.sin(m_hdg));
+		m_xLeftCorner =     m_xCenter + (halfWheelBase*Math.sin(m_hdg));
+        m_yRightCorner =    m_yCenter + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
+        m_yLeftCorner =     m_yCenter - Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
 
-        double criticalHdg = Math.signum(xFrontCenter) * -1.0 * Math.abs((Math.PI / 2.0) - Math.asin((Math.abs(yFrontCenter) - Constants.kVisionApproachDist) / Math.abs(xFrontCenter)));//radians
+        double criticalHdg = Math.signum(m_xCenter) * -1.0 * Math.abs((Math.PI / 2.0) - Math.asin((Math.abs(m_yCenter) - Constants.kVisionApproachDist) / Math.abs(m_xCenter)));//radians
         if(criticalHdg > 0){
-            if(hdg < criticalHdg){
+            if(m_hdg < criticalHdg){
                 //need 2 stages
                 
             }
         }else{
-            if(hdg > criticalHdg){
+            if(m_hdg > criticalHdg){
                 //need 2 stages
 
             }
         }
 
-		double xFrontCorner = xFrontCenter - (halfWheelBase*Math.sin(hdg));
-		double yFrontCorner = yFrontCenter + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(hdg)));
+
 
 		double xGoal = -24;
 		double yGoal = -Constants.kWheelBaseFeet*12/2.0;
-		double radiusTurn = Math.abs(xFrontCorner - xGoal)/Math.tan(hdg) + (yFrontCorner - yGoal);//inches
+		//double radiusTurn = Math.abs(m_xCorner - xGoal)/Math.tan(m_hdg) + (m_yCorner - yGoal);//inches
     }
 
 }

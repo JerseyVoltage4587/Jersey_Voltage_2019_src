@@ -183,29 +183,22 @@ public class Robot extends TimedRobot {
 			SmartDashboard.putNumber("xRobot", xRobot);
 			SmartDashboard.putNumber("yRobot", yRobot);
 			
-			double angleToTarget = (Math.abs(yRobot)<0.01) ? 0 : Math.atan(xRobot/yRobot);
-			angleToTarget *= 180.0 / Math.PI;
-			double desiredHeading = Math.signum(angleToTarget) * (90 - Math.abs(angleToTarget));
-			SmartDashboard.putNumber("angleToTarget", angleToTarget);
-			SmartDashboard.putNumber("desiredHeading", desiredHeading);
-			long endTime = System.nanoTime();
-			SmartDashboard.putNumber("visionCalcTime", (endTime-startTime)/1000000.0);
-
-			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);
-			double degreesToTurn = 90 - Gyro.getYaw();
-			double hdg = -Gyro.getYaw() * Math.PI / 180.0;
-			double camToBumper = 12;
-
-			double xFrontCorner = (xRobot) - (halfWheelBase*Math.sin(hdg)) + (camToBumper * Math.cos(hdg));
-			double yFrontCorner = (yRobot) + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(hdg)) + (camToBumper * Math.sin(hdg)));
-
-			SmartDashboard.putNumber("xFrontCorner", xFrontCorner);
-			SmartDashboard.putNumber("yFrontCorner", yFrontCorner);
-			double xGoal = -24;
-			double yGoal = -Constants.kWheelBaseFeet*12/2.0;
-			double radiusTurn = Math.abs(xFrontCorner - xGoal)/Math.tan(hdg) + (yFrontCorner - yGoal);
-			SmartDashboard.putNumber("radius",radiusTurn);
-			SmartDashboard.putNumber("degrees",degreesToTurn);
+			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);//inches
+			double m_hdg = Gyro.getYaw() * Math.PI / 180.0;
+  	      	double m_xCenter = xRobot + (Constants.kCamToBumper * Math.cos(m_hdg));
+        	double m_yCenter = yRobot + (Constants.kCamToBumper * Math.sin(m_hdg));
+			double m_xRightCorner =    m_xCenter - (halfWheelBase*Math.sin(m_hdg));
+			double m_xLeftCorner =     m_xCenter + (halfWheelBase*Math.sin(m_hdg));
+			double m_yRightCorner =    m_yCenter + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
+			double m_yLeftCorner =     m_yCenter - Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
+			double criticalHdg = Math.signum(m_yCenter) * -1.0 * Math.abs(Math.atan(Math.abs(m_yCenter) / (Math.abs(m_xCenter) - Constants.kVisionApproachDist)));//radians
+			SmartDashboard.putNumber("m_xCenter", m_xCenter);
+			SmartDashboard.putNumber("m_yCenter", m_yCenter);
+			SmartDashboard.putNumber("m_xLeftCorner", m_xLeftCorner);
+			SmartDashboard.putNumber("m_yLeftCorner", m_yLeftCorner);
+			SmartDashboard.putNumber("m_xRightCorner", m_xRightCorner);
+			SmartDashboard.putNumber("m_yRightCorner", m_yRightCorner);
+			SmartDashboard.putNumber("criticalHeading", criticalHdg*180/Math.PI);
 
 			//Robot.getDrive().setDesiredArc(radiusTurn, degreesToTurn);
 			

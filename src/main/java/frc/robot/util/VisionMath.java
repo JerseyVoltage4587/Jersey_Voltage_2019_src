@@ -18,7 +18,7 @@ public class VisionMath {
     }
 
     public void findRobotPos(){
-        NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+        NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
 		NetworkTableEntry txe = limelightTable.getEntry("tx");
         double tx = txe.getDouble(0.0);
         tx *= (Math.PI/180.0);
