@@ -115,7 +115,7 @@ public class CalcPathToTarget {
 
         double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);//inches
 
-        m_hdg = -Gyro.getYaw() * Math.PI / 180.0;
+        m_hdg = Gyro.getYaw() * Math.PI / 180.0;
         m_xCenter = x + (Constants.kCamToBumper * Math.cos(m_hdg));
         m_yCenter = y - (Constants.kCamToBumper * Math.sin(m_hdg));
 		m_xRightCorner =    m_xCenter - (halfWheelBase*Math.sin(m_hdg));
@@ -123,8 +123,8 @@ public class CalcPathToTarget {
         m_yRightCorner =    m_yCenter + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
         m_yLeftCorner =     m_yCenter - Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
 
-        double criticalHdg = Math.signum(m_xCenter) * -1.0 * Math.abs((Math.PI / 2.0) - Math.asin((Math.abs(m_yCenter) - Constants.kVisionApproachDist) / Math.abs(m_xCenter)));//radians
-        if(criticalHdg > 0){
+        double criticalHdg = Math.signum(m_yCenter) * -1.0 * Math.abs(Math.atan(Math.abs(m_yCenter) / (Math.abs(m_xCenter) - Constants.kVisionApproachDist)));//radians
+		if(criticalHdg > 0){
             if(m_hdg < criticalHdg){
                 //need 2 stages
                 
