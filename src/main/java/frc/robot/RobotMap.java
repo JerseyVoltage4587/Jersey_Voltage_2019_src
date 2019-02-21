@@ -16,6 +16,9 @@ public class RobotMap {
 	public static final int DRIVE_LEFT_TALON = 1;
 	public static final int DRIVE_LEFT_VICTOR_1 = 11;
 	public static final int DRIVE_LEFT_VICTOR_2 = 12;
+	public static final int CLIMB_FRONT_TALON = 3;
+	public static final int CLIMB_BACK_TALON = 4;
+	public static final int CLIMB_DRIVE_VICTOR = 5;
 
 	//PWM's
 	public static final int LIFT_0_SPARK = 4;

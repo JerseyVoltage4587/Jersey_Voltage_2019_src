@@ -18,6 +18,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.util.Gyro;
 import frc.robot.util.VisionMath;
 import frc.robot.util.AsyncStructuredLogger;
+import frc.robot.util.CalcPathToTarget;
 import jaci.pathfinder.Trajectory;
 import jaci.pathfinder.Trajectory.Segment;
 
@@ -551,7 +552,7 @@ public class Drive extends Subsystem {
     	if (mStartingPath) {
     		mStartingPath = false;
 			setPathPos(0,0);
-    		follower = new PathFollower(m_leftTrajectory,m_rightTrajectory);
+    		follower = new PathFollower(m_leftTrajectory,m_rightTrajectory,true);
     		//System.out.println("follower != null");
     		follower.initialize();
     	}
@@ -653,17 +654,49 @@ public class Drive extends Subsystem {
 
         // Force a CAN message across.
         mIsBrakeMode = true;
-        setBrakeMode(false);
+		setBrakeMode(false);
+		
+		/*
+		_leftSlave1 = new WPI_VictorSPX(RobotMap.DRIVE_LEFT_VICTOR_1);
+		_leftSlave2 = new WPI_VictorSPX(RobotMap.DRIVE_LEFT_VICTOR_2);
+		_rightSlave1 = new WPI_TalonSRX(RobotMap.DRIVE_RIGHT_TALON_SLAVE);
+		_rightSlave2 = new WPI_VictorSPX(RobotMap.DRIVE_RIGHT_VICTOR_2);
+		WPI_TalonSRX testTalon1 = new WPI_TalonSRX(RobotMap.CLIMB_FRONT_TALON);
+		WPI_TalonSRX testTalon2 = new WPI_TalonSRX(RobotMap.CLIMB_BACK_TALON);
+		WPI_TalonSRX testTalon3 = new WPI_TalonSRX(40);
+		WPI_TalonSRX testTalon4 = new WPI_TalonSRX(50);
+		WPI_TalonSRX testTalon5 = new WPI_TalonSRX(51);
+		WPI_VictorSPX testVictor1 = new WPI_VictorSPX(RobotMap.CLIMB_DRIVE_VICTOR);
+		WPI_VictorSPX testVictor2 = new WPI_VictorSPX(41);
+		WPI_VictorSPX testVictor3 = new WPI_VictorSPX(30);
+		WPI_VictorSPX testVictor4 = new WPI_VictorSPX(31);
 
+		_leftSlave1.follow(mLeftMaster);
+		_leftSlave2.follow(mLeftMaster);
+		_rightSlave1.follow(mLeftMaster);
+		_rightSlave2.follow(mLeftMaster);
+		testTalon1.follow(mLeftMaster);
+		testTalon2.follow(mLeftMaster);
+		testTalon3.follow(mLeftMaster);
+		testTalon4.follow(mLeftMaster);
+		testTalon5.follow(mLeftMaster);
+		testVictor1.follow(mLeftMaster);
+		testVictor2.follow(mLeftMaster);
+		testVictor3.follow(mLeftMaster);
+		testVictor4.follow(mLeftMaster);
+*/
         mDebugOutput = new DebugOutput();
         mCSVWriter = new AsyncStructuredLogger<DebugOutput>("DriveLog" ,DebugOutput.class);
         
 		vm = new VisionMath();
 
         _drive = new DifferentialDrive(mLeftMaster, mRightMaster);
-        
-        
-    }
+		
+		calcPath = new CalcPathToTarget();
+        calcPath.calcPath(0.0);
+	}
+	CalcPathToTarget calcPath;
+
     @Override
     public void registerEnabledLoops(Looper in) {
         in.register(mLoop);

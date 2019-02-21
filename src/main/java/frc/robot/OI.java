@@ -9,6 +9,9 @@ package frc.robot;
 
 import frc.robot.util.JoyButton;
 import frc.robot.commands.StartVisionDrive;
+import frc.robot.commands.ClimbHalfOn;
+import frc.robot.commands.ClimbRest;
+import frc.robot.commands.ClimbUp;
 import frc.robot.commands.StartOpenLoop;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -84,8 +87,9 @@ public class OI {
     	count3Button2 	= new JoystickButton(driverStation, 8);
     	
     	//System.out.println("OI start");  println is evil
-    	buttonA1.whenPressed(new StartVisionDrive());
-    	buttonB1.whenPressed(new StartOpenLoop());
+    	buttonA1.whenPressed(new ClimbUp());
+    	buttonB1.whenPressed(new ClimbHalfOn());
+		buttonY1.whenPressed(new ClimbRest());
     	
 	}
 

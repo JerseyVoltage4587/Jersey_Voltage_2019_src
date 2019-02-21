@@ -17,8 +17,10 @@ import java.util.Arrays;
 import frc.robot.commands.DriveDist;
 import frc.robot.commands.TurnToAngle;
 import frc.robot.loops.Looper;
+import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.Drive.DriveControlState;
+import frc.robot.util.CalcPathToTarget;
 import frc.robot.util.CrashTracker;
 import frc.robot.util.DriveSignal;
 import frc.robot.util.VisionMath;
@@ -46,6 +48,9 @@ public class Robot extends TimedRobot {
 	public static Drive getDrive(){
 		return Drive.getInstance();
 	}
+	public static Climb getClimb(){
+		return Climb.getInstance();
+	}
 	private static PowerDistributionPanel m_PDP;
 	public static PowerDistributionPanel getPDP(){
 		return m_PDP;
@@ -68,13 +73,15 @@ public class Robot extends TimedRobot {
 		
 		try {
 			CrashTracker.logRobotInit();
-		    m_PDP = new PowerDistributionPanel(0);
+		    //m_PDP = new PowerDistributionPanel(0);
 			// Create all subsystems and register them with the subsystem manager.
 			mEnabledLooper = new Looper();
-			mSubsystemManager = new SubsystemManager(Arrays.asList(Drive.getInstance()));
+			mSubsystemManager = new SubsystemManager(Arrays.asList());//Drive.getInstance()));//,Climb.getInstance()));
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
 			OI.getInstance();
+			CalcPathToTarget calcPathToTarget = new CalcPathToTarget();
+			calcPathToTarget.calcPath(0.0);
 
 
 			
@@ -236,6 +243,10 @@ public class Robot extends TimedRobot {
 			CrashTracker.logAutonomousInit();
 			// Start the subsystem loops.
 			mEnabledLooper.start();
+			getClimb().setDesiredDist(10);
+			getClimb().startClimbing();
+			//getClimb().startHold();
+
 			VisionMath vm = new VisionMath();
 			vm.findRobotPos();
 			double xRobot = vm.getRobotX();
@@ -254,10 +265,10 @@ public class Robot extends TimedRobot {
 			double yGoal = -Constants.kWheelBaseFeet*12/2.0;
 			double radiusTurn = Math.abs(xFrontCorner - xGoal)/Math.tan(hdg) + (yFrontCorner - yGoal);
 
-			Robot.getDrive().setDesiredArc(radiusTurn, -Gyro.getYaw());
+			//Robot.getDrive().setDesiredArc(radiusTurn, -Gyro.getYaw());
 			//Robot.getDrive().setDesiredArc(76, -Gyro.getYaw());
 			//Robot.getDrive().startSimpleVisionDrive();
-    		Robot.getDrive().startPath();
+    		//Robot.getDrive().startPath();
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
 			//autonomousCommand.start();

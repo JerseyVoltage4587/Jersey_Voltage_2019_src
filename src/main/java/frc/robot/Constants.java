@@ -36,9 +36,11 @@ public class Constants{
     public static final double kVisionXToMotorWeak = 0.02;
     public static final double kVisionXToMotorStrong = 0.04;
     public static final double kVisionDeltaAngleTolerance = 1.0;//degrees
-    public static final double kVisionApproachDist = 2.0;//ft
+    public static final double kVisionApproachDist = -2.0;//ft
+    public static final double kVisionApproachVel = 2.0;//ft per s
     public static final double kMinimumRadiusTurn = kWheelBaseFeet + 0.5;//ft
     public static final double kCamToBumper = 12;//inches
+    public static final double kVisionMidPtVel = 2.0;//ft per s
 
     public static final double kVisionXTolerance = 1.5;
     public static final double kVisionYTolerance = 3.5;
@@ -66,7 +68,21 @@ public class Constants{
     public static final double kDriveMaxBackAccPerILiftLow = 0.02;
     public static final double kDriveMaxBackAccPerILiftHigh = 0.01;
     public static final double kPathDoneTicsTolerance = 4 / kInchesPerTic;
+
+    //Climb
+    public static final double kClimbPulleyDiameter = 0.75;//in
+    public static final double kClimbInchesPerTic = Constants.kClimbPulleyDiameter * Math.PI / Constants.kSensorUnitsPerRotation;
+    public static final double kClimbMaxAcceleration = 1;//ft per s
+
+    public static final double kClimbKa = 0;
+    public static final double kClimbKv = 0.005;
+    public static final double kClimbKp = 0.0005;
+    public static final double kClimbKg = 0.075;
     
+    public static final double kClimbHoldKp = 0.0005;
+    public static final double kClimbHoldKg = 0.075;
+    public static final double kClimbHoldGravityMotorLevel = 0.1;
+
     //Lift
     public static final double kLiftTicsPerRev = 256.0;
     public static final double kLiftInchesPerRevHighGear = 2.5 * Math.PI * (26.0/84.0) * (50.0/34.0); // 40 to 44, 24 to 84, 2.5in dia
