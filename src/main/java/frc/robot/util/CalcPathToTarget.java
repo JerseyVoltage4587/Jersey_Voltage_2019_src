@@ -114,6 +114,7 @@ public class CalcPathToTarget {
         }
         //first arc
         m_arc1Radius = actualRadius;
+        theta -= m_hdg;
         theta *= 180.0 / Math.PI;
         m_arc1Deg = theta;
         updateRobotPos(m_arc1Radius, m_arc1Deg);
@@ -162,18 +163,18 @@ public class CalcPathToTarget {
     private void calcFinalStage(){
         double xGoal = Constants.kVisionApproachDist*12;//convert ft to in
         double yGoal = 0;
-        double radiusTurn2;
         if(Math.abs(m_hdg*180.0/Math.PI) < 0.1){
             //don't divide by 0
             return;
         }
+        double radiusIntercept = m_yLeftCorner + ((xGoal - m_xLeftCorner)*(m_yRightCorner - m_yLeftCorner)) / (m_xRightCorner - m_xLeftCorner);
+        double radiusDist = Math.sqrt((m_xCenter - xGoal)*(m_xCenter - xGoal) + (m_yCenter - radiusIntercept) * (m_yCenter - radiusIntercept));
 
-        double xTranslatedGoal = xGoal - m_xCenter;
-        double yTranslatedGoal = yGoal - m_yCenter;
-        double yRotatedGoal = xTranslatedGoal * Math.sin(-m_hdg) + yTranslatedGoal * Math.cos(-m_hdg);
-        double centerRadius = Math.abs(yRotatedGoal) / (1 - Math.cos(-m_hdg));
-        asyncAdHocLogger.q("xTranslated: ").q(xTranslatedGoal).q(" yTranslated: ").q(yTranslatedGoal).q(" yRotated: ").q(yRotatedGoal).go();
-        m_arc2Radius = centerRadius + Constants.kWheelBaseFeet*12.0/2.0;
+        double realRadius = (radiusDist + radiusIntercept) / 2.0;
+
+        m_arc2Radius = realRadius + Constants.kWheelBaseFeet*12.0/2.0;
+        asyncAdHocLogger.q("xCenter: ").q(m_xCenter).q(" yCenter: ").q(m_yCenter).go();
+        asyncAdHocLogger.q("radiusIntercept: ").q(radiusIntercept).q(" radiusDist: ").q(radiusDist).go();
         asyncAdHocLogger.q("arc2rad: ").q(m_arc2Radius).q(" xTerm: ").q(Math.abs(m_xRightCorner - xGoal)).q(" hdg: ").q(m_hdg).q(" yCorn: ").q(m_yRightCorner).go();
         
         m_arc2Deg = -(m_hdg*180.0/Math.PI);
@@ -188,7 +189,7 @@ public class CalcPathToTarget {
 
         double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);//inches
 
-        m_hdg = -5*Math.PI/180.0;//Gyro.getYaw() * Math.PI / 180.0;
+        m_hdg = 10*Math.PI/180.0;//Gyro.getYaw() * Math.PI / 180.0;
         m_xCenter =-70;// x + (Constants.kCamToBumper * Math.cos(m_hdg));
         m_yCenter =10;// y - (Constants.kCamToBumper * Math.sin(m_hdg));
         double multiplier = 1;//m_hdg == 0 ? 1 : Math.signum(m_hdg);

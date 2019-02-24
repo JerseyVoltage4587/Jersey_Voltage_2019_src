@@ -76,7 +76,7 @@ public class Robot extends TimedRobot {
 		    //m_PDP = new PowerDistributionPanel(0);
 			// Create all subsystems and register them with the subsystem manager.
 			mEnabledLooper = new Looper();
-			mSubsystemManager = new SubsystemManager(Arrays.asList());//Drive.getInstance()));//,Climb.getInstance()));
+			mSubsystemManager = new SubsystemManager(Arrays.asList(Drive.getInstance()));//,Climb.getInstance()));
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
 			OI.getInstance();
