@@ -3,19 +3,19 @@ package frc.robot.paths;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 
-import frc.robot.Constants;
-
-import jaci.pathfinder.Pathfinder;
 import jaci.pathfinder.Trajectory;
-import jaci.pathfinder.Waypoint;
 import jaci.pathfinder.Trajectory.Segment;
-import jaci.pathfinder.modifiers.TankModifier;
 
 public class PathReader {
-	public Trajectory left;
-	public Trajectory right;
+	private Trajectory left;
+	private Trajectory right;
+	public Trajectory getLeftTraj(){
+		return left;
+	}
+	public Trajectory getRightTraj(){
+		return right;
+	}
 	public PathReader(String filename){
 
 		

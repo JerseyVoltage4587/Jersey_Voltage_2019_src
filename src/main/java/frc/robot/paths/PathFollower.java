@@ -163,6 +163,12 @@ public class PathFollower {
     		quit = true;
     		step0 = step1 = m_leftPath.length()-1;
 		}
+		while(m_leftPath.get(step1).dt == 0){
+			//finished the filled in path
+    		quit = true;
+			step1 -= 1;
+			step0 -= 1;
+		}
 	    		Trajectory.Segment left0;
 	        	Trajectory.Segment right0;
 	    		Trajectory.Segment left1;

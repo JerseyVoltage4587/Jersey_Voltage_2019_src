@@ -12,8 +12,9 @@ import frc.robot.commands.StartVisionDrive;
 import frc.robot.commands.ClimbHalfOn;
 import frc.robot.commands.ClimbRest;
 import frc.robot.commands.ClimbUp;
+import frc.robot.commands.SetCameraMode;
 import frc.robot.commands.StartOpenLoop;
-
+import frc.robot.commands.StartSimpleVision;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.Button;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
@@ -87,9 +88,9 @@ public class OI {
     	count3Button2 	= new JoystickButton(driverStation, 8);
     	
     	//System.out.println("OI start");  println is evil
-    	buttonA1.whenPressed(new ClimbUp());
-    	buttonB1.whenPressed(new ClimbHalfOn());
-		buttonY1.whenPressed(new ClimbRest());
+    	buttonA1.whenPressed(new SetCameraMode(true));
+		buttonB1.whenPressed(new SetCameraMode(false));
+		buttonX1.whenPressed(new StartSimpleVision());
     	
 	}
 

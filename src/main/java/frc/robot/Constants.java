@@ -12,35 +12,32 @@ public class Constants{
     
     public static double kStepSizeSeconds = 0.01;
     public static double kMaxFeetPerSecond = 10.0;
-    public static double kMaxAcceleration = 15.0;
+    public static double kMaxAcceleration = 5;//15.0;
     public static double kMaxJerk = 40.0;
-    public static double kWheelBaseFeet = 31.0 / 12.0;//25.75
+    public static double kWheelBaseFeet = 29.0 / 12.0;//25.75
     
-    public static final double kLiftAMax = 20;
-    public static final double kLiftVMax = 20;
-
-    public static final double kScaleHighLiftFlip = 3.1;
-    public static final double kScaleLowLiftFlip = 1.0;
-    public static final double kScaleLiftNoFlip = 3.1;
-    public static final double kScaleHighArm = -147.0;
-    public static final double kScaleLowArm = -185.0;
-    public static final double kScaleArmFlip = -12.0;
+    public static final double kNearRocketHatchAngle = 0;//TODO tune this
+    public static final double kFarRocketHatchAngle = 0;//TODO tune this
+    public static final double kRocketVisionAngleTolerance = 0;//TODO tune this
 
     public static final double kInchesPerVisionY = 4.273662947; // VisionY = 27 - (limelight ty output)
     public static final double kDegPerVisionX = 0.971;
     public static final double kVisionDistToMotor = 0.007;
-    public static final double kVisionXToMotor = 0.0075;
-    public static final double kVisionDistToStop = 7.0;
+    public static final double kVisionXToMotor = 0.0125;
+    public static final double kVisionDistToStop = 3.0;//inches
     public static final double kVisionFullArea = 10.0;
+    public static final double kVisionMinMotorLevel = 0.2;
 
     public static final double kVisionXToMotorWeak = 0.02;
     public static final double kVisionXToMotorStrong = 0.04;
     public static final double kVisionDeltaAngleTolerance = 1.0;//degrees
-    public static final double kVisionApproachDist = -2.0;//ft
-    public static final double kVisionApproachVel = 2.0;//ft per s
+    public static final double kVisionApproachDist = -1.0;//ft
+    public static final double kVisionApproachVel = 0.0;//ft per s
     public static final double kMinimumRadiusTurn = kWheelBaseFeet + 0.5;//ft
     public static final double kCamToBumper = 12;//inches
     public static final double kVisionMidPtVel = 2.0;//ft per s
+    public static final double kVisionLargestApproachAngle = 10*Math.PI/180.0;//radians
+    public static final double kVisionAngleHdgTolerance = 4*Math.PI/180.0;//radians
 
     public static final double kVisionXTolerance = 1.5;
     public static final double kVisionYTolerance = 3.5;
@@ -60,7 +57,7 @@ public class Constants{
     /* ROBOT PHYSICAL CONSTANTS */
 
     // Wheels
-    public static final double kDriveWheelDiameterInches = 6;
+    public static final double kDriveWheelDiameterInches = 4;
     public static double kTrackWidthInches = 26.655;
     public static double kTrackScrubFactor = 0.924;
     public static final double kInchesPerTic = Constants.kDriveWheelDiameterInches * Math.PI / Constants.kSensorUnitsPerRotation;
@@ -114,6 +111,7 @@ public class Constants{
     public static final double kLiftHeightTolerance = 0.1;
     public static final double kLiftBumpDist = 0.5;
     public static final double kLiftClimbHeight = 2.275;
+    public static final double kLiftStage2Pos = 0;
 
     //Arm
     public static final double kArmTicsPerRev = 1024.0;
@@ -166,10 +164,10 @@ public class Constants{
     public static final double kODesiredFinalMotor = 0.8;
     public static final double kSimpleArcTolerance = 10.0;
 
-    public static final double kPathFollowKa = 0.065;
-    public static final double kPathFollowKv = 0.0035;//0.0029;
-    public static final double kPathFollowKp = 0.0005;
-    public static final double kPathFollowKg = 0.025;
+    public static final double kPathFollowKa = 0;//0.065;
+    public static final double kPathFollowKv = 0.0045;
+    public static final double kPathFollowKp = 0.00025;
+    public static final double kPathFollowKg = 0.01;
 
     public static final double kPathHoldKp = 0.0005;
     public static final double kPathHoldKg = 0.0001;

@@ -9,23 +9,28 @@ import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import frc.robot.paths.*;
 import java.util.Arrays;
 
+import frc.robot.commands.AutoTest;
 import frc.robot.commands.DriveDist;
 import frc.robot.commands.TurnToAngle;
 import frc.robot.loops.Looper;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.Drive.DriveControlState;
+import frc.robot.util.AsyncAdHocLogger;
 import frc.robot.util.CalcPathToTarget;
 import frc.robot.util.CrashTracker;
 import frc.robot.util.DriveSignal;
 import frc.robot.util.VisionMath;
+import frc.robot.util.VisionMath.scoringZone;
 import frc.robot.util.Gyro;
 import jaci.pathfinder.Trajectory;
+import jaci.pathfinder.Waypoint;
 import jaci.pathfinder.Trajectory.Segment;
 
 /**
@@ -68,6 +73,11 @@ public class Robot extends TimedRobot {
 	 * used for any initialization code.
 	 */
 	private boolean m_robotInit_loggedError = false;
+	private static PathManager m_pathManager;
+	public static PathManager getPathManager() {
+		return m_pathManager;
+	}
+
 	@Override
 	public void robotInit() {
 		
@@ -80,10 +90,16 @@ public class Robot extends TimedRobot {
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
 			OI.getInstance();
-			CalcPathToTarget calcPathToTarget = new CalcPathToTarget();
-			calcPathToTarget.calcPath(0.0);
+			
+			Robot.getDrive().setVisionPath();
+			//CalcPathToTarget calcPathToTarget = new CalcPathToTarget();
+			//calcPathToTarget.calcPath(0.0);
 
-
+			m_pathManager = new PathManager();
+			//comment this so the robot doesn't write paths every power cycle
+			//m_pathManager.writePaths();
+			m_pathManager.savePaths();
+			
 			
 		    //CameraServer.getInstance().startAutomaticCapture();
 		} catch (Throwable t) {
@@ -97,53 +113,6 @@ public class Robot extends TimedRobot {
 
 		double test0 = Robot.getDrive().getLeftEnc();
 		double test1 = Robot.getDrive().getRightEnc();
-/*
-
-		double m_desiredDist = 2.0;//feet
-			
-			double halfTime = Math.sqrt(m_desiredDist/Constants.kMaxAcceleration);
-			int numIntervals = (int)(100*halfTime)+1;
-			halfTime = numIntervals * 0.01;
-			double m_acceleration = m_desiredDist / (halfTime*halfTime);
-
-			Segment[] path = new Segment[(numIntervals*2)+2];
-			double yaw = Gyro.getYaw();
-			double xMax=0;
-			double vMax=0;
-			for(int i = 0;i<numIntervals+1;i++){
-				double v = m_acceleration * (i * 0.01);
-				double x = 0.5 * m_acceleration * ((i * 0.01)*(i * 0.01));
-				//System.out.println("x: "+x+" v: "+v+" a: "+m_acceleration+" yaw: "+yaw);
-				path[i] = new Segment(0.01, 0, 0, x, v, m_acceleration, 0, yaw);
-				xMax = x;
-				vMax = v;
-			}
-			for(int i = 0;i<numIntervals+1;i++){
-				double v = vMax - (m_acceleration * (i * 0.01));
-				double x = xMax + (vMax*(i*0.01)) - (0.5 * m_acceleration * ((i * 0.01)*(i * 0.01)));
-				//System.out.println("x: "+x+" v: "+v+" a: "+m_acceleration+" yaw: "+yaw);
-				path[i+numIntervals+1] = new Segment(0.01, 0, 0, x, v, -m_acceleration, 0, yaw);
-			}
-			Trajectory m_leftTrajectory = new Trajectory(path);
-			Trajectory m_rightTrajectory = new Trajectory(path);
-
-			PathFollower follower = new PathFollower(m_leftTrajectory, m_rightTrajectory);
-
-			follower.initialize();
-
-			long[] timeArray = new long[100];
-			int tpos = -1;
-			timeArray[++tpos] = System.nanoTime();
-			follower.execute();
-			timeArray[++tpos] = System.nanoTime();
-			follower.execute();
-			timeArray[++tpos] = System.nanoTime();
-			follower.execute();
-			timeArray[++tpos] = System.nanoTime();
-			System.out.println("step0: "+(timeArray[1]-timeArray[0])/1000000.0);
-			System.out.println("step1: "+(timeArray[2]-timeArray[1])/1000000.0);
-			System.out.println("step2: "+(timeArray[3]-timeArray[2])/1000000.0);
-*/
 
 	}
 
@@ -182,33 +151,12 @@ public class Robot extends TimedRobot {
 	@Override
 	public void disabledPeriodic() {
 		try {
-			long startTime = System.nanoTime();
 			VisionMath vm = new VisionMath();
 			vm.findRobotPos();
 			double xRobot = vm.getRobotX();
 			double yRobot = vm.getRobotY();
 			SmartDashboard.putNumber("xRobot", xRobot);
 			SmartDashboard.putNumber("yRobot", yRobot);
-			
-			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);//inches
-			double m_hdg = Gyro.getYaw() * Math.PI / 180.0;
-  	      	double m_xCenter = xRobot + (Constants.kCamToBumper * Math.cos(m_hdg));
-        	double m_yCenter = yRobot + (Constants.kCamToBumper * Math.sin(m_hdg));
-			double m_xRightCorner =    m_xCenter - (halfWheelBase*Math.sin(m_hdg));
-			double m_xLeftCorner =     m_xCenter + (halfWheelBase*Math.sin(m_hdg));
-			double m_yRightCorner =    m_yCenter + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
-			double m_yLeftCorner =     m_yCenter - Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(m_hdg)));
-			double criticalHdg = Math.signum(m_yCenter) * -1.0 * Math.abs(Math.atan(Math.abs(m_yCenter) / (Math.abs(m_xCenter) - Constants.kVisionApproachDist)));//radians
-			SmartDashboard.putNumber("m_xCenter", m_xCenter);
-			SmartDashboard.putNumber("m_yCenter", m_yCenter);
-			SmartDashboard.putNumber("m_xLeftCorner", m_xLeftCorner);
-			SmartDashboard.putNumber("m_yLeftCorner", m_yLeftCorner);
-			SmartDashboard.putNumber("m_xRightCorner", m_xRightCorner);
-			SmartDashboard.putNumber("m_yRightCorner", m_yRightCorner);
-			SmartDashboard.putNumber("criticalHeading", criticalHdg*180/Math.PI);
-
-			//Robot.getDrive().setDesiredArc(radiusTurn, degreesToTurn);
-			
 
 			allPeriodic();
 		} catch (Throwable t) {
@@ -243,35 +191,18 @@ public class Robot extends TimedRobot {
 			CrashTracker.logAutonomousInit();
 			// Start the subsystem loops.
 			mEnabledLooper.start();
-			getClimb().setDesiredDist(10);
-			getClimb().startClimbing();
+			//getClimb().setDesiredDist(10);
+			//getClimb().startClimbing();
 			//getClimb().startHold();
 
-			VisionMath vm = new VisionMath();
-			vm.findRobotPos();
-			double xRobot = vm.getRobotX();
-			double yRobot = vm.getRobotY();
-			SmartDashboard.putNumber("xRobot", xRobot);
-			SmartDashboard.putNumber("yRobot", yRobot);
+			//Robot.getDrive().setVisionPath();
+			//Robot.getDrive().startPath();
 
-			double halfWheelBase = ((12* Constants.kWheelBaseFeet) / 2.0);
-			double hdg = -Gyro.getYaw() * Math.PI / 180.0;
-			double camToBumper = 12;
-
-			double xFrontCorner = (xRobot) - (halfWheelBase*Math.sin(hdg)) + (camToBumper * Math.cos(hdg));
-			double yFrontCorner = (yRobot) + Math.signum(Gyro.getYaw()) * ((halfWheelBase*Math.cos(hdg)) + (camToBumper * Math.sin(hdg)));
-
-			double xGoal = -24;
-			double yGoal = -Constants.kWheelBaseFeet*12/2.0;
-			double radiusTurn = Math.abs(xFrontCorner - xGoal)/Math.tan(hdg) + (yFrontCorner - yGoal);
-
-			//Robot.getDrive().setDesiredArc(radiusTurn, -Gyro.getYaw());
-			//Robot.getDrive().setDesiredArc(76, -Gyro.getYaw());
-			//Robot.getDrive().startSimpleVisionDrive();
-    		//Robot.getDrive().startPath();
+			//Command autonomousCommand = new AutoTest();
+			Command autonomousCommand = new AutoTest();
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
-			//autonomousCommand.start();
+			autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");
@@ -292,13 +223,6 @@ public class Robot extends TimedRobot {
 	public void autonomousPeriodic() {
 		try {
 			allPeriodic();
-
-			if(getDrive().getState() != DriveControlState.PATH_FOLLOWING){
-				if(done==false){
-					Robot.getDrive().startSimpleVisionDrive();
-					done = true;
-				}
-			}
 			
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousPeriodic");

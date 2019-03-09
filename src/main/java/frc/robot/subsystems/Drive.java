@@ -17,6 +17,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 import frc.robot.util.Gyro;
 import frc.robot.util.VisionMath;
+import frc.robot.util.VisionMath.scoringZone;
 import frc.robot.util.AsyncStructuredLogger;
 import frc.robot.util.CalcPathToTarget;
 import jaci.pathfinder.Trajectory;
@@ -24,6 +25,7 @@ import jaci.pathfinder.Trajectory.Segment;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.TimerTask;
 
 import frc.robot.paths.*;
 
@@ -175,6 +177,13 @@ public class Drive extends Subsystem {
     	pathFilename = x;
 	}
 	private Trajectory m_leftTrajectory,m_rightTrajectory;
+
+	public void setTrajectories(Trajectory left, Trajectory right) {
+    	synchronized (Drive.this) {
+			m_leftTrajectory = left;
+			m_rightTrajectory = right;
+    	}
+    }
     
     public void startPath() {
     	//System.out.println("in startPath");
@@ -229,6 +238,14 @@ public class Drive extends Subsystem {
     	//System.out.println("in startVisionDrive");
     	synchronized (Drive.this) {
     		mDriveControlState = DriveControlState.VISION_DRIVE;
+    	}
+	}
+
+	public void setVisionPath(){
+		synchronized (Drive.this) {	
+			calcPath.calcPath(0.0);
+			m_leftTrajectory = calcPath.getLeftTrajectory();
+			m_rightTrajectory = calcPath.getRightTrajectory();
     	}
 	}
 
@@ -328,7 +345,6 @@ public class Drive extends Subsystem {
 	};
 	double m_lastLeftVel=0,m_lastRightVel=0;
 	private void doVisionDrive(){
-
 		vm.findRobotPos();
 		double xRobot = vm.getRobotX();
 		double yRobot = vm.getRobotY();
@@ -395,8 +411,18 @@ public class Drive extends Subsystem {
 		m_lastRightVel = rightVel;
 	}
 
+	public class FlashTimer extends TimerTask{
+		public void run(){
+			NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
+			limelightTable.getEntry("ledMode").forceSetNumber(0);
+		}
+	}
+
+	double lastDesiredDist;
+	double distMoved;
+	int notMovingCount;
 	private void doSimpleVisionDrive(){
-		NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+		NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
 		NetworkTableEntry tv = limelightTable.getEntry("tv");
 		double v = tv.getDouble(0.0);
 		NetworkTableEntry tx = limelightTable.getEntry("tx");
@@ -406,29 +432,56 @@ public class Drive extends Subsystem {
 		double xRobot = vm.getRobotX();
 		double yRobot = vm.getRobotY();
 		double distRobot = Math.sqrt((xRobot*xRobot)+(yRobot*yRobot));
+		if(xRobot < 900 && yRobot < 900){
+			//have pic
+			lastDesiredDist = distRobot;
+			distMoved = 0;
+			notMovingCount = 0;
+		}else{
+			//don't have pic
+			x=0;
+		}
+		distRobot = lastDesiredDist - distMoved;//no change if we have pic
 
 		double left = 0;
 		double right = 0;
 
 		left = (distRobot * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);
 		right = (distRobot * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);
+		if(Math.abs(left)<Constants.kVisionMinMotorLevel && Math.abs(right) < Constants.kVisionMinMotorLevel){
+			left = Constants.kVisionMinMotorLevel * Math.signum(left);
+			right = Constants.kVisionMinMotorLevel * Math.signum(right);
+		}
 
 		if(Math.abs(x) < Constants.kVisionXTolerance){
-			//System.out.println("x: "+x+" < XTolerance: "+Constants.kVisionXTolerance);
-			
-				double desiredDist = 1.0;//Constants.kVisionDistToStop - ((10 - a) * 0.9);
-				if(xRobot > desiredDist){
-					//setOpenLoop(DriveSignal.NEUTRAL);
-					left=0;
-					right=0;
+			boolean done = false;
+			if(v == 0.0){
+				double deltaDist = (getLeftEnc() - m_leftEncoderLast) * Constants.kInchesPerTic;
+				if(Math.abs(deltaDist) < 0.01){notMovingCount++;}
+				distMoved += deltaDist;
+				asyncAdHocLogger.q("distMoved: ").q(distMoved).q(" lastDesiredDist: ").q(lastDesiredDist).go();
+				if(distMoved >= (lastDesiredDist - Constants.kVisionDistToStop)){
+					done = true;
 				}
-			
+				if(notMovingCount>5){
+					done = true;
+				}
+			}else{
+				if(Math.abs(xRobot) <= Constants.kVisionDistToStop){
+					done = true;
+				}
+			}
+			if(done){
+				setOpenLoop(DriveSignal.NEUTRAL);
+				left=0;
+				right=0;
+				limelightTable.getEntry("ledMode").forceSetNumber(2);
+					
+				m_timer.schedule(new FlashTimer(),2000);
+			}
 		}
-		if(v == 0.0){
-			left=0;
-			right=0;
-		}
-		System.out.println(left+","+right);
+		
+		asyncAdHocLogger.q(left+","+right).go();
 		setMotorLevels(left, -right);
 	}
 
@@ -655,6 +708,8 @@ public class Drive extends Subsystem {
         // Force a CAN message across.
         mIsBrakeMode = true;
 		setBrakeMode(false);
+
+		m_timer = new java.util.Timer();
 		
 		/*
 		_leftSlave1 = new WPI_VictorSPX(RobotMap.DRIVE_LEFT_VICTOR_1);
@@ -693,14 +748,21 @@ public class Drive extends Subsystem {
         _drive = new DifferentialDrive(mLeftMaster, mRightMaster);
 		
 		calcPath = new CalcPathToTarget();
-        calcPath.calcPath(0.0);
 	}
+	java.util.Timer m_timer = null;
 	CalcPathToTarget calcPath;
 
     @Override
     public void registerEnabledLoops(Looper in) {
         in.register(mLoop);
-    }
+	}
+	
+	public double getLeftVel(){
+		return mLeftMaster.getSelectedSensorVelocity();
+	}
+	public double getRightVel(){
+		return mRightMaster.getSelectedSensorVelocity();
+	}
 
     /**
      * Configure talons for open loop control
