@@ -71,6 +71,8 @@ public class Drive extends Subsystem {
     	return mDriveControlState;
     }
 	private int m_leftEncoderLast,m_rightEncoderLast = 0;
+	private double m_leftMotorLevelLast=0;
+	private double m_rightMotorLevelLast = 0;
 	private long m_lastTime;
     public int getLeftEnc(){
     	return mLeftMaster.getSelectedSensorPosition(0);
@@ -415,6 +417,9 @@ public class Drive extends Subsystem {
 		public void run(){
 			NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
 			limelightTable.getEntry("ledMode").forceSetNumber(0);
+			
+			NetworkTable limelightTable1 = NetworkTableInstance.getDefault().getTable("limelight-back");
+			limelightTable1.getEntry("ledMode").forceSetNumber(0);
 		}
 	}
 
@@ -422,7 +427,17 @@ public class Drive extends Subsystem {
 	double distMoved;
 	int notMovingCount;
 	private void doSimpleVisionDrive(){
-		NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
+		NetworkTable limelightTable;
+		boolean driveBackwards;
+        if(Robot.getArm().getArmSetpoint() > 0){
+            //front camera
+            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
+			driveBackwards = false;
+		}else{
+            //back camera
+            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
+			driveBackwards = true;
+		}
 		NetworkTableEntry tv = limelightTable.getEntry("tv");
 		double v = tv.getDouble(0.0);
 		NetworkTableEntry tx = limelightTable.getEntry("tx");
@@ -432,6 +447,7 @@ public class Drive extends Subsystem {
 		double xRobot = vm.getRobotX();
 		double yRobot = vm.getRobotY();
 		double distRobot = Math.sqrt((xRobot*xRobot)+(yRobot*yRobot));
+		distRobot -= Constants.kVisionDistToStop;
 		if(xRobot < 900 && yRobot < 900){
 			//have pic
 			lastDesiredDist = distRobot;
@@ -481,7 +497,29 @@ public class Drive extends Subsystem {
 			}
 		}
 		
-		asyncAdHocLogger.q(left+","+right).go();
+		if(driveBackwards){
+			double holdRight = right;
+			right = -left;
+			left = -holdRight;
+		}
+		asyncAdHocLogger.q("left: ").q(left).q(" leftLast: ").q(m_leftMotorLevelLast).q(" right: ").q(right).q(" rightLast: ").q(m_rightMotorLevelLast).go();
+		double leftRightRatio = Math.abs(left/right);
+		if(driveBackwards){
+			if((m_leftMotorLevelLast - left)>Constants.kVisionMotorLevelAccMax){
+				left = m_leftMotorLevelLast - (Constants.kVisionMotorLevelAccMax * leftRightRatio);
+			}
+			if((m_rightMotorLevelLast - right)>Constants.kVisionMotorLevelAccMax){
+				right = m_rightMotorLevelLast - (Constants.kVisionMotorLevelAccMax / leftRightRatio);
+			}
+		}else{
+			if((left - m_leftMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
+				left = m_leftMotorLevelLast + (Constants.kVisionMotorLevelAccMax * leftRightRatio);
+			}
+			if((right - m_rightMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
+				right = m_rightMotorLevelLast + (Constants.kVisionMotorLevelAccMax / leftRightRatio);
+			}
+		}
+
 		setMotorLevels(left, -right);
 	}
 
@@ -633,7 +671,9 @@ public class Drive extends Subsystem {
     	}
     	if(right > 1){
     		right = 1;
-    	}
+		}
+		m_leftMotorLevelLast = left;
+		m_rightMotorLevelLast = -right;
     	mLeftMaster.set(ControlMode.PercentOutput, left);
     	mRightMaster.set(ControlMode.PercentOutput, right);
     }

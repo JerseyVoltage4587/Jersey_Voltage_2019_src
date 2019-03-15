@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Compressor;
 //GIT test
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
@@ -19,8 +20,11 @@ import frc.robot.commands.AutoTest;
 import frc.robot.commands.DriveDist;
 import frc.robot.commands.TurnToAngle;
 import frc.robot.loops.Looper;
+import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Climb;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Lift;
 import frc.robot.subsystems.Drive.DriveControlState;
 import frc.robot.util.AsyncAdHocLogger;
 import frc.robot.util.CalcPathToTarget;
@@ -56,6 +60,15 @@ public class Robot extends TimedRobot {
 	public static Climb getClimb(){
 		return Climb.getInstance();
 	}
+	public static Arm getArm(){
+		return Arm.getInstance();
+	}
+	public static Lift getLift(){
+		return Lift.getInstance();
+	}
+	public static Intake getIntake(){
+		return Intake.getInstance();
+	}
 	private static PowerDistributionPanel m_PDP;
 	public static PowerDistributionPanel getPDP(){
 		return m_PDP;
@@ -86,12 +99,22 @@ public class Robot extends TimedRobot {
 		    //m_PDP = new PowerDistributionPanel(0);
 			// Create all subsystems and register them with the subsystem manager.
 			mEnabledLooper = new Looper();
-			mSubsystemManager = new SubsystemManager(Arrays.asList(Drive.getInstance()));//,Climb.getInstance()));
+			mSubsystemManager = new SubsystemManager(Arrays.asList(
+														Drive.getInstance()
+														,Arm.getInstance()
+														,Climb.getInstance()
+														,Lift.getInstance()
+														,Intake.getInstance()
+														));
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
 			OI.getInstance();
+
+			//Compressor c = new Compressor(0);
+			//c.setClosedLoopControl(true);
+			getArm().zeroSensors();
 			
-			Robot.getDrive().setVisionPath();
+			//Robot.getDrive().setVisionPath();
 			//CalcPathToTarget calcPathToTarget = new CalcPathToTarget();
 			//calcPathToTarget.calcPath(0.0);
 
@@ -269,6 +292,14 @@ public class Robot extends TimedRobot {
 	public void teleopPeriodic() {
 		try {
 			allPeriodic();
+			
+			VisionMath vm = new VisionMath();
+			vm.findRobotPos();
+			double xRobot = vm.getRobotX();
+			double yRobot = vm.getRobotY();
+			SmartDashboard.putNumber("xRobot", xRobot);
+			SmartDashboard.putNumber("yRobot", yRobot);
+
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"teleopPeriodic");
 			if ( m_teleopPeriodic_loggedError == false ) {

@@ -1,5 +1,6 @@
 package frc.robot.util;
 import frc.robot.Constants;
+import frc.robot.Robot;
 
 import java.util.Enumeration;
 
@@ -39,7 +40,14 @@ public class VisionMath {
     }
 
     public void findRobotPos(){
-        NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
+        NetworkTable limelightTable;
+        if(Robot.getArm().getArmSetpoint() > 0){
+            //front camera
+            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
+        }else{
+            //back camera
+            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
+        }
         NetworkTableEntry tve = limelightTable.getEntry("tv");
         double tv = tve.getDouble(0.0);
         if(tv == 0){
@@ -118,7 +126,9 @@ public class VisionMath {
                 break;
         }
         m_g *= (Math.PI/180.0);//convert to radians for trig functions
-        m_yRobot = (xCam * Math.sin(m_g)) + (yCam * Math.cos(m_g));
-        m_xRobot = (xCam * Math.cos(m_g)) - (yCam * Math.sin(m_g));
+        //m_yRobot = (xCam * Math.sin(m_g)) + (yCam * Math.cos(m_g));
+        //m_xRobot = (xCam * Math.cos(m_g)) - (yCam * Math.sin(m_g));
+        m_yRobot = yCam;
+        m_xRobot = xCam;
     }
 }

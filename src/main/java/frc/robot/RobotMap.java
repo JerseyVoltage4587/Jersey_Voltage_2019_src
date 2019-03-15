@@ -19,18 +19,24 @@ public class RobotMap {
 	public static final int CLIMB_FRONT_TALON = 3;
 	public static final int CLIMB_BACK_TALON = 4;
 	public static final int CLIMB_DRIVE_VICTOR = 5;
-	public static final int LIFT_TALON = -999;
-	public static final int LIFT_VICTOR = -999;
-	public static final int ARM_TALON = -999;
+	public static final int LIFT_TALON = 40;
+	public static final int LIFT_VICTOR = 41;
+	public static final int ARM_TALON = 50;
+	public static final int INTAKE_TALON = 51;
+
+	public static final int CANIFIER = 0;
 
 	//PWM's
 	//don't exist
 	
 	//Solenoid's
-	public static final int INTAKE_CLOSE = 1;
-	public static final int INTAKE_OPEN = 4;
-	public static final int FLOOPERS = 5;
-	public static final int INTAKE_LEDS = 7;
+	public static final int POKE = 0;
+	public static final int FINGERS = 1;
+
+	public static final boolean kPokeOut = false;
+	public static final boolean kPokeIn = true;
+	public static final boolean kFingersOpen = false;
+	public static final boolean kFingersClosed = true;
 	
 	//DIO's
 	//don't exist

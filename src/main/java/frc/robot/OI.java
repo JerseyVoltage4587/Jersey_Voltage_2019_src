@@ -9,12 +9,16 @@ package frc.robot;
 
 import frc.robot.util.JoyButton;
 import frc.robot.commands.StartVisionDrive;
+import frc.robot.subsystems.Intake.IntakeControlState;
 import frc.robot.commands.ClimbHalfOn;
 import frc.robot.commands.ClimbRest;
 import frc.robot.commands.ClimbUp;
+import frc.robot.commands.SetArmSetpoint;
+import frc.robot.commands.SetLiftSetpoint;
 import frc.robot.commands.SetCameraMode;
 import frc.robot.commands.StartOpenLoop;
 import frc.robot.commands.StartSimpleVision;
+import frc.robot.commands.SetIntakeState;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.Button;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
@@ -88,10 +92,25 @@ public class OI {
     	count3Button2 	= new JoystickButton(driverStation, 8);
     	
     	//System.out.println("OI start");  println is evil
-    	buttonA1.whenPressed(new SetCameraMode(true));
-		buttonB1.whenPressed(new SetCameraMode(false));
-		buttonX1.whenPressed(new StartSimpleVision());
-    	
+    	/*buttonA1.whenPressed(new SetArmSetpoint(-90));
+		buttonB1.whenPressed(new SetArmSetpoint(0));
+		buttonY1.whenPressed(new SetArmSetpoint(90));
+		*///buttonX1.whenPressed(new StartSimpleVision());
+		
+		/*buttonA1.whenPressed(new SetLiftSetpoint(0.0));
+		buttonB1.whenPressed(new SetLiftSetpoint(1.0));
+		buttonY1.whenPressed(new SetLiftSetpoint(4.5));
+		*/
+		/*buttonA1.whenPressed(new ClimbUp());
+		buttonB1.whenPressed(new ClimbHalfOn());
+		buttonY1.whenPressed(new ClimbRest());
+		*/
+		/*buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
+		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
+		buttonX1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
+		*/
+		buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
+		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
 	}
 
 	// Get the value of the "drive" stick.

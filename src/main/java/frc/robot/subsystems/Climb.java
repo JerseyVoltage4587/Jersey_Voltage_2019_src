@@ -96,6 +96,7 @@ public class Climb extends Subsystem {
 	public void setDesiredDist(double distInches){
     	synchronized(Drive.class){
 			m_desiredDist = distInches / 12.0;//feet
+			m_desiredDist *= 19.0/15.0;//TODO get rid of this fudge?
 			/*m_zeroLeftEncoder = getLeftEnc();
 			m_zeroRightEncoder = getRightEnc();
 			m_xNext = 0;*/
@@ -170,7 +171,8 @@ public class Climb extends Subsystem {
 			mStartingPath = true;
     		mClimbControlState = ClimbControlState.HALF_ON;
     	}
-    }public void startHold() {
+	}
+	public void startHold() {
     	//System.out.println("in startPath");
     	synchronized (Climb.this) {
 			mStartingPath = true;

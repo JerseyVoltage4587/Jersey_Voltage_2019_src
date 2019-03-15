@@ -1,21 +1,25 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2018 FIRST. All Rights Reserved.                             */
+/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* must be accompanied by the FIRST BSD license file in the root directory of */
+/* the project.                                                               */
+/*----------------------------------------------------------------------------*/
+
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
 import frc.robot.Robot;
-import frc.robot.subsystems.Drive.DriveControlState;
-import frc.robot.util.DriveSignal;
 
-public class ClimbHalfOn extends Command {
-  
-  public ClimbHalfOn() {
-    
+public class SetLiftSetpoint extends Command {
+  double m_setpoint;
+  public SetLiftSetpoint(double setpoint) {
+    m_setpoint = setpoint;
   }
 
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
-    Robot.getClimb().setDesiredDist(-20);
-    Robot.getClimb().startHalfOn();
+    Robot.getLift().setLiftSetpoint(m_setpoint);
   }
 
   // Called repeatedly when this Command is scheduled to run
@@ -32,7 +36,6 @@ public class ClimbHalfOn extends Command {
   // Called once after isFinished returns true
   @Override
   protected void end() {
-    //Robot.getDrive().setOpenLoop(DriveSignal.NEUTRAL);
   }
 
   // Called when another command which requires one or more of the same

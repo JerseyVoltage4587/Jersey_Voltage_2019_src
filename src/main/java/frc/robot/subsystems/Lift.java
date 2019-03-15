@@ -53,11 +53,11 @@ public class Lift extends Subsystem {
         	mCurrentTime = System.nanoTime();
         	mPos = getPosFeet();
         	mVel = getVelFPS();
-        	if(Math.abs(mPos - mLiftSetpoint) < Constants.kLiftTolerance){
+        	/*if(Math.abs(mPos - mLiftSetpoint) < Constants.kLiftTolerance){
         		mIsAtSetpoints = true;
         	}else{
         		mIsAtSetpoints = false;
-        	}
+        	}*/
             synchronized (Lift.class) {
             	xPos = mPos;
             	xVel = mVel;
@@ -82,12 +82,14 @@ public class Lift extends Subsystem {
 				lift_motor_level = lift_error * Constants.kLiftKp;
 			}
 
-			if(mPos > Constants.kLiftStage2Pos){
-				lift_motor_level += Constants.kLiftHoldHighPower;
-			}else{
-				lift_motor_level += Constants.kLiftHoldLowPower;
+			if(mLiftSetpoint > 0.1){
+				//don't add hold power if at bottom
+				if(mPos > Constants.kLiftStage2Pos){
+					lift_motor_level += Constants.kLiftHoldHighPower;
+				}else{
+					lift_motor_level += Constants.kLiftHoldLowPower;
+				}
 			}
-			
 			setLiftMotorLevels(lift_motor_level);
 			
             logValues();
@@ -135,7 +137,12 @@ public class Lift extends Subsystem {
     private double xLiftSetpoint;
     public void setLiftSetpoint(double setpoint){
     	synchronized (Lift.class){
-    		xLiftSetpoint = setpoint;
+			xLiftSetpoint = setpoint;
+			if(setpoint>Constants.kLiftMaxHeight){
+				xLiftSetpoint = Constants.kLiftMaxHeight;
+			}else if(setpoint<0){
+				xLiftSetpoint = 0;
+			}
     	}
     }
     public double getLiftSetpoint(){
@@ -159,13 +166,16 @@ public class Lift extends Subsystem {
     
     private Lift() {
 		liftTalon = new WPI_TalonSRX(RobotMap.LIFT_TALON);
+		liftTalon.setInverted(true);
         liftTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
         liftTalon.changeMotionControlFramePeriod(5);
-        liftTalon.setSensorPhase(false);
+        liftTalon.setSensorPhase(true);
         liftTalon.setNeutralMode(NeutralMode.Brake);
 		liftTalon.configNeutralDeadband(0.01, 10);
+		liftTalon.setSelectedSensorPosition(0);
 
 		liftVictor = new WPI_VictorSPX(RobotMap.LIFT_VICTOR);
+		liftVictor.setInverted(true);
 		liftVictor.follow(liftTalon);
 		
         mDebugOutput = new DebugOutput();
@@ -177,7 +187,8 @@ public class Lift extends Subsystem {
 	private double mLiftDrive, mEncoder;
     
     private double getPosFeet(){
- 	   return mEncoder * Constants.kLiftInchesPerTicHighGear / 12.0;
+		//return mEncoder * Constants.kLiftInchesPerTicHighGear / 12.0;
+		return liftTalon.getSelectedSensorPosition() * Constants.kLiftInchesPerTicHighGear / 12.0;
     }
     
     private double getVelFPS(){
@@ -191,7 +202,7 @@ public class Lift extends Subsystem {
         
     @Override
     public void outputToSmartDashboard() {
-    	SmartDashboard.putNumber("Lift Height", getPosFeet());
+    	SmartDashboard.putNumber("Lift Height (ft)", getPosFeet());
     	SmartDashboard.putNumber("Lift Setpoint", getLiftSetpoint());
 		SmartDashboard.putNumber("Lift encoder", liftTalon.getSelectedSensorPosition());
 		SmartDashboard.putNumber("Lift Motor", liftTalon.get());
@@ -201,7 +212,7 @@ public class Lift extends Subsystem {
     private DebugOutput mDebugOutput;
     private final AsyncStructuredLogger<DebugOutput> mCSVWriter;
     
-    public class DebugOutput{
+    public static class DebugOutput{
     	public long sysTime;
     	public double liftEncoder;
     	public double posFeet;
