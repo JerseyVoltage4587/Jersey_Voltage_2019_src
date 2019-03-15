@@ -31,7 +31,7 @@ import edu.wpi.first.wpilibj.buttons.JoystickButton;
 public class OI {
 	private static OI mInstance = null;
 	private Joystick stick1;
-	Button	  buttonA1, buttonB1, buttonX1, buttonY1, leftBumper1, rightBumper1,startButton1;
+	Button	  buttonA1, buttonB1, buttonX1, buttonY1, leftBumper1, rightBumper1,startButton1, leftStickButton1, rightStickButton1;
 	JoyButton leftTrigger1, rightTrigger1;
 	Joystick  stick2;
 	Button	  buttonA2, buttonB2, buttonX2, buttonY2, leftBumper2, rightBumper2;
@@ -64,7 +64,9 @@ public class OI {
     	leftTrigger1	= new JoyButton(stick1, JoyButton.JoyDir.DOWN, 2);
     	rightBumper1	= new JoystickButton(stick1, 6);
     	rightTrigger1	= new JoyButton(stick1, JoyButton.JoyDir.DOWN, 3);
-    	startButton1	= new JoystickButton(stick1, 8);
+		startButton1	= new JoystickButton(stick1, 8);
+		leftStickButton1= new JoystickButton(stick1, 9);
+		rightStickButton1=new JoystickButton(stick1, 10);
     	
     	stick2			= new Joystick(2);
     	buttonA2		= new JoystickButton(stick2, 1);
@@ -109,8 +111,20 @@ public class OI {
 		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
 		buttonX1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
 		*/
-		buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
+		/*buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
 		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
+		*/
+		buttonA1.whenPressed(new SetArmSetpoint(-90));
+		buttonB1.whenPressed(new SetArmSetpoint(0));
+		buttonY1.whenPressed(new SetArmSetpoint(90));
+		leftBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
+		leftTrigger1.whenPressed(new SetIntakeState(IntakeControlState.SHOOT_BALL));
+		leftTrigger1.whenReleased(new SetIntakeState(IntakeControlState.OFF));
+		rightTrigger1.whenPressed(new StartSimpleVision());
+		rightTrigger1.whenReleased(new StartOpenLoop());
+		leftStickButton1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
+		rightStickButton1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
+
 	}
 
 	// Get the value of the "drive" stick.

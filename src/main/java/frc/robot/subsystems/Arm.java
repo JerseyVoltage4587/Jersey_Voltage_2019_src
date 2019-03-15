@@ -8,6 +8,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.RobotMap;
 import frc.robot.loops.Loop;
 import frc.robot.loops.Looper;
@@ -123,10 +124,18 @@ public class Arm extends Subsystem {
     public void setArmSetpoint(double setpoint){
     	synchronized (Arm.class){
 			xArmSetpoint = setpoint;
-			if(setpoint < Constants.kArmSoftStopLow){
-				xArmSetpoint = Constants.kArmSoftStopLow;
-			}else if(setpoint > Constants.kArmSoftStopHigh){
-				xArmSetpoint = Constants.kArmSoftStopHigh;
+
+			double lowStop = Constants.kArmSoftStopLow;
+			double highStop = Constants.kArmSoftStopHigh;
+			if(Robot.getIntake().getHasHatch() == true){
+				lowStop = Constants.kArmHatchStopLow;
+				highStop = Constants.kArmHatchStopHigh;
+			}
+
+			if(setpoint < lowStop){
+				xArmSetpoint = lowStop;
+			}else if(setpoint > highStop){
+				xArmSetpoint = highStop;
 			}
     	}
     }

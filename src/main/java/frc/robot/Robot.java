@@ -73,7 +73,19 @@ public class Robot extends TimedRobot {
 	public static PowerDistributionPanel getPDP(){
 		return m_PDP;
 	}
-	 
+	
+	public static void setVisionPipeline(){
+		NetworkTable ll0 = NetworkTableInstance.getDefault().getTable("limelight-front");
+		NetworkTable ll1 = NetworkTableInstance.getDefault().getTable("limelight-back");
+		ll0.getEntry("pipeline").forceSetNumber(0);
+		ll1.getEntry("pipeline").forceSetNumber(0);
+	}
+	public static void setDriverPipeline(){
+		NetworkTable ll0 = NetworkTableInstance.getDefault().getTable("limelight-front");
+		NetworkTable ll1 = NetworkTableInstance.getDefault().getTable("limelight-back");
+		ll0.getEntry("pipeline").forceSetNumber(1);
+		ll1.getEntry("pipeline").forceSetNumber(1);
+	}
 	/**
 	 * Constructor
 	 */

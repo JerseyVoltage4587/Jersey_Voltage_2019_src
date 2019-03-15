@@ -111,6 +111,8 @@ public class Constants{
     public static final double kArmJoystickDeadband = 0.1;
     public static final double kArmSoftStopHigh = 90.0;
     public static final double kArmSoftStopLow = -90.0;
+    public static final double kArmHatchStopLow = -90.0;
+    public static final double kArmHatchStopHigh = 90.0;
     public static final double kArmDegTolerance = 5.0;
 
     public static final double kArmIntakeDeg = -183.5;

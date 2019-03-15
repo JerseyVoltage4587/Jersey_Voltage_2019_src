@@ -61,6 +61,7 @@ public class Intake extends Subsystem {
 		HOLD_BALL,
 		INTAKE_HATCH,
 		HOLD_HATCH,
+		SHOOT_BALL,
     }
     public IntakeControlState getState(){
     	return mIntakeControlState;
@@ -69,7 +70,8 @@ public class Intake extends Subsystem {
     private IntakeControlState mIntakeControlState = IntakeControlState.OFF;
 
     // Hardware
-    private final WPI_TalonSRX mIntakeTalon;
+	private final WPI_TalonSRX mIntakeTalon;
+	private final Solenoid mIntakeBrake;
 
     // Logging
     private DebugOutput mDebugOutput;
@@ -105,6 +107,10 @@ public class Intake extends Subsystem {
     		mIntakeControlState = state;
     	}
 	}
+	private boolean m_hasHatch = true;
+	public boolean getHasHatch(){
+		return m_hasHatch;
+	}
 
 	
 	AsyncAdHocLogger asyncAdHocLogger;
@@ -133,11 +139,15 @@ public class Intake extends Subsystem {
 					mIntakeTalon.set(0.0);
 					pokeIn();
 					openFingers();
+					brakeOff();
+					m_hasHatch = false;
                     break;
 				case INTAKE_BALL:
 					mIntakeTalon.set(1.0);
 					pokeIn();
 					openFingers();
+					brakeOff();
+					m_hasHatch = false;
 					if(mIntakeTalon.getOutputCurrent() > Constants.kIntakeStallCurrent){
 						count++;
 					}else{
@@ -153,16 +163,29 @@ public class Intake extends Subsystem {
 					mIntakeTalon.set(0.3);
 					pokeIn();
 					openFingers();
+					brakeOn();
+					m_hasHatch = false;
+					break;
+				case SHOOT_BALL:
+					mIntakeTalon.set(-1.0);
+					pokeIn();
+					openFingers();
+					brakeOff();
+					m_hasHatch = false;
 					break;
 				case INTAKE_HATCH:
 					mIntakeTalon.set(0.0);
 					pokeOut();
 					closeFingers();
+					brakeOff();
+					m_hasHatch = true;
 					break;
 				case HOLD_HATCH:
 					mIntakeTalon.set(0.0);
 					pokeOut();
 					openFingers();
+					brakeOff();
+					m_hasHatch = true;
 					break;
                 default:
                     System.out.println("Unexpected climb control state: " + mIntakeControlState);
@@ -205,6 +228,7 @@ public class Intake extends Subsystem {
 	private final Solenoid poke, fingers;
 	private boolean pokeState = false;
 	private boolean fingerState = false;
+	private boolean brakeState = false;
 
 	private void openFingers(){
 		if(fingerState != RobotMap.kFingersOpen){
@@ -230,6 +254,18 @@ public class Intake extends Subsystem {
 			pokeState = RobotMap.kPokeIn;
 		}
 	}
+	private void brakeOn(){
+		if(brakeState != RobotMap.kBrakeOn){
+			mIntakeBrake.set(RobotMap.kBrakeOn);
+			brakeState = RobotMap.kBrakeOn;
+		}
+	}
+	private void brakeOff(){
+		if(brakeState != RobotMap.kBrakeOff){
+			mIntakeBrake.set(RobotMap.kBrakeOff);
+			brakeState = RobotMap.kBrakeOff;
+		}
+	}
 
 	private Intake() {
 		// Start all Talons in open loop mode.
@@ -239,6 +275,7 @@ public class Intake extends Subsystem {
 
 		poke = new Solenoid(1,RobotMap.POKE);
 		fingers = new Solenoid(1,RobotMap.FINGERS);
+		mIntakeBrake = new Solenoid(1,RobotMap.INTAKE_BRAKE);
 
         mDebugOutput = new DebugOutput();
         mCSVWriter = new AsyncStructuredLogger<DebugOutput>("IntakeLog" ,DebugOutput.class);
