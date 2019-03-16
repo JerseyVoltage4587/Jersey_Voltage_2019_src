@@ -160,14 +160,14 @@ public class Intake extends Subsystem {
 					}
 					break;
 				case HOLD_BALL:
-					mIntakeTalon.set(0.3);
+					mIntakeTalon.set(0.0);
 					pokeIn();
 					openFingers();
 					brakeOn();
 					m_hasHatch = false;
 					break;
 				case SHOOT_BALL:
-					mIntakeTalon.set(-1.0);
+					mIntakeTalon.set(-0.35);
 					pokeIn();
 					openFingers();
 					brakeOff();
@@ -190,7 +190,7 @@ public class Intake extends Subsystem {
                 default:
                     System.out.println("Unexpected climb control state: " + mIntakeControlState);
                     break;
-                }
+				}
 			}
         	logValues();
         }

@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.CANifier;
@@ -8,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import frc.robot.Constants;
+import frc.robot.OI;
 import frc.robot.Robot;
 import frc.robot.RobotMap;
 import frc.robot.loops.Loop;
@@ -55,8 +57,26 @@ public class Arm extends Subsystem {
         		xIsAtSetpoints = mIsAtSetpoints;
             	mArmSetpoint = xArmSetpoint;
             }
-			
-			doPathFollowing();
+			if(backStop.get() == false){
+				can.setQuadraturePosition(convertDegToEnc(-110),10);//convertDegToEnc(Constants.kArmSoftStopLow), 10);
+			}
+			if(frontStop.get() == false){
+				can.setQuadraturePosition(convertDegToEnc(110),10);//convertDegToEnc(Constants.kArmSoftStopHigh), 10);
+			}
+			//doPathFollowing();
+			double motorLevel = OI.getInstance().getDrive2();
+			if(backStop.get() == false){
+				if(motorLevel <= 0){
+					motorLevel = 0;
+				}
+			}
+			if(frontStop.get() == false){
+				if(motorLevel >= 0){
+					motorLevel = 0;
+				}
+			}
+			armMotor.set(-motorLevel);
+
 
             logValues();
             mLastArmError = mArmError;
@@ -79,27 +99,46 @@ public class Arm extends Subsystem {
     	x = -x;
     	armMotor.set(x);
     }
-	
+	boolean slowDown = false;
 	private void doPathFollowing(){
 
     	double error = mArmSetpoint - mArmPos;
     	double arm_motor_level;
     	//double armRealPos = mArmPos + 12;
-		if (error>60.0){
+		if (error>40.0){
+			slowDown = false;
 			arm_motor_level = Constants.kArmMaxMotorUp;
 			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if (error>5.0){
+			slowDown = false;
 			arm_motor_level = Constants.kArmSlowMotorUp;
 			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
-		}else if(error<-60.0){
+		}else if(error<-40.0){
+			slowDown = false;
 			arm_motor_level = Constants.kArmMaxMotorDown;
 			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if(error<-5.0){
+			slowDown = false;
 			arm_motor_level = Constants.kArmSlowMotorDown;
 			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else{
+			slowDown = true;
 			arm_motor_level = 0.0;//getArmPIDOutput(mArmSetpoint);
 			arm_motor_level -= 3*Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+		}
+
+		if(slowDown){
+			arm_motor_level = getArmPIDOutput(mArmSetpoint);
+			arm_motor_level -= 3*Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+		}
+
+		if(mArmSetpoint > 45 && frontStop.get() == false){
+			//at front stop
+			arm_motor_level = 0;
+		}
+		if(mArmSetpoint < -45 && backStop.get() == false){
+			//at back stop
+			arm_motor_level = 0;
 		}
 		
 		SmartDashboard.putNumber("arm setpoint", mArmSetpoint);
@@ -157,6 +196,7 @@ public class Arm extends Subsystem {
     // Hardware
 	private final WPI_TalonSRX armMotor;
 	private final CANifier can;
+	private final DigitalInput frontStop, backStop;
     
     private Arm() {
 		armMotor = new WPI_TalonSRX(RobotMap.ARM_TALON);
@@ -165,7 +205,9 @@ public class Arm extends Subsystem {
 		armMotor.setInverted(true);
 		can = new CANifier(RobotMap.CANIFIER);
 		can.configFactoryDefault();
-		
+
+		frontStop = new DigitalInput(RobotMap.FRONT_ARM_STOP);
+		backStop = new DigitalInput(RobotMap.BACK_ARM_STOP);
 		
         mDebugOutput = new DebugOutput();
         mCSVWriter = new AsyncStructuredLogger<DebugOutput>("ArmLog", DebugOutput.class);
@@ -178,7 +220,11 @@ public class Arm extends Subsystem {
 
     private double getPosDegrees(){
  	   return can.getQuadraturePosition() * -1 * Constants.kArmDegreesPerTic;
-    }
+	}
+	
+	private int convertDegToEnc(double deg){
+		return (int)(deg * -1 / Constants.kArmDegreesPerTic);
+	}
 
     private double getArmPIDOutput(double setpoint_to_use){
     	double error = setpoint_to_use - mArmPos;
@@ -201,8 +247,11 @@ public class Arm extends Subsystem {
     public void outputToSmartDashboard() {
     	SmartDashboard.putNumber("Arm Setpoint", getArmSetpoint());
     	SmartDashboard.putNumber("Arm Degrees", getPosDegrees());
-    	SmartDashboard.putNumber("Arm encoder", can.getQuadraturePosition()*-1);
-    	SmartDashboard.putNumber("Arm Motor Percent", armMotor.get());
+		SmartDashboard.putNumber("Arm encoder", can.getQuadraturePosition()*-1);
+		SmartDashboard.putNumber("re-zero forward pt",convertDegToEnc(Constants.kArmSoftStopHigh));
+		SmartDashboard.putNumber("Arm Motor Percent", armMotor.get());
+		SmartDashboard.putBoolean("Arm Front Stop",frontStop.get());
+		SmartDashboard.putBoolean("Arm Back Stop",backStop.get());
     }
 
     // Logging

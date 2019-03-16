@@ -23,7 +23,7 @@ public class Constants{
     public static final double kInchesPerVisionY = 4.273662947; // VisionY = 27 - (limelight ty output)
     public static final double kDegPerVisionX = 0.971;
     public static final double kVisionDistToMotor = 0.03;
-    public static final double kVisionXToMotor = 0.015;
+    public static final double kVisionXToMotor = 0.04;//0.015
     public static final double kVisionDistToStop = 22.0;//inches
     public static final double kVisionFullArea = 10.0;
     public static final double kVisionMinMotorLevel = 0.0;
@@ -44,7 +44,7 @@ public class Constants{
     public static final double kVisionYTolerance = 3.5;
 
     public static final double kZRobotInches = 3.5;
-    public static final double kCameraRotation = -15 * (Math.PI / 180.0);
+    public static final double kCameraRotation = 0 * (Math.PI / 180.0);
 
     public static final double kTurnToAngleKp = 0.04;
     public static final double kTurnToAngleKd = 0.05;
@@ -70,12 +70,12 @@ public class Constants{
     //Climb
     public static final double kClimbPulleyDiameter = 0.75;//in
     public static final double kClimbInchesPerTic = Constants.kClimbPulleyDiameter * Math.PI / Constants.kSensorUnitsPerRotation;
-    public static final double kClimbMaxAcceleration = 1;//ft per s
+    public static final double kClimbMaxAcceleration = 0.5;//ft per s
 
     public static final double kClimbKa = 0;
     public static final double kClimbKv = 0.005;
     public static final double kClimbKp = 0.001;
-    public static final double kClimbKg = 0.3;
+    public static final double kClimbKg = 0.1;
     
     public static final double kClimbHoldKp = 0.0005;
     public static final double kClimbHoldKg = 0.075;
@@ -104,13 +104,13 @@ public class Constants{
     public static final double kArmDegreesPerTic = Constants.kArmDegreesPerRev / Constants.kArmTicsPerRev; //-425
     public static final double kArmMaxAmps = 45;
     public static final long kArmTimeSinceHitMax = 1000*1000*1000;
-    public static final double kArmMaxMotorUp = 0.6;
-    public static final double kArmMaxMotorDown = -0.6;
-    public static final double kArmSlowMotorUp = 0.5;
-    public static final double kArmSlowMotorDown = -0.5;
+    public static final double kArmMaxMotorUp = 1.0;
+    public static final double kArmMaxMotorDown = -1.0;
+    public static final double kArmSlowMotorUp = 0.7;
+    public static final double kArmSlowMotorDown = -0.7;
     public static final double kArmJoystickDeadband = 0.1;
-    public static final double kArmSoftStopHigh = 90.0;
-    public static final double kArmSoftStopLow = -90.0;
+    public static final double kArmSoftStopHigh = 1000.0;//100
+    public static final double kArmSoftStopLow = -1000.0;//-100
     public static final double kArmHatchStopLow = -90.0;
     public static final double kArmHatchStopHigh = 90.0;
     public static final double kArmDegTolerance = 5.0;
@@ -144,7 +144,7 @@ public class Constants{
     public static final double kPathHoldKp = 0.0005;
     public static final double kPathHoldKg = 0.0001;
     
-    public static final double kArmHoldKp = 0.0;
+    public static final double kArmHoldKp = 0.025;
     public static final double kArmHoldKi = 0.0;
     public static final double kArmHoldKd = 0.0;
     public static final double kArmHoldPower = 0.45;

@@ -13,6 +13,7 @@ import frc.robot.subsystems.Intake.IntakeControlState;
 import frc.robot.commands.ClimbHalfOn;
 import frc.robot.commands.ClimbRest;
 import frc.robot.commands.ClimbUp;
+import frc.robot.commands.SetClimbMotor;
 import frc.robot.commands.SetArmSetpoint;
 import frc.robot.commands.SetLiftSetpoint;
 import frc.robot.commands.SetCameraMode;
@@ -114,9 +115,11 @@ public class OI {
 		/*buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
 		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
 		*/
-		buttonA1.whenPressed(new SetArmSetpoint(-90));
+		buttonA1.whenPressed(new SetArmSetpoint(-150));
 		buttonB1.whenPressed(new SetArmSetpoint(0));
-		buttonY1.whenPressed(new SetArmSetpoint(90));
+		buttonY1.whenPressed(new SetArmSetpoint(150));
+		buttonX1.whenPressed(new SetArmSetpoint(50));
+		
 		leftBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
 		leftTrigger1.whenPressed(new SetIntakeState(IntakeControlState.SHOOT_BALL));
 		leftTrigger1.whenReleased(new SetIntakeState(IntakeControlState.OFF));
@@ -125,6 +128,14 @@ public class OI {
 		leftStickButton1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
 		rightStickButton1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
 
+		
+		buttonA2.whenPressed(new ClimbUp());
+		buttonB2.whenPressed(new ClimbHalfOn());
+		buttonY2.whenPressed(new ClimbRest());
+
+		rightBumper1.whenPressed(new SetClimbMotor(-0.5));
+		rightBumper1.whenReleased(new SetClimbMotor(0.0));
+		
 	}
 
 	// Get the value of the "drive" stick.
@@ -137,6 +148,10 @@ public class OI {
 	public double getTurn()
 	{
 		return stick1.getRawAxis(4);
+	}
+
+	public double getDrive2(){
+		return -0.5 * stick2.getRawAxis(1);
 	}
 	
 	public int getPOV() {

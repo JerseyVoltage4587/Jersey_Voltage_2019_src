@@ -42,7 +42,8 @@ public class RobotMap {
 	public static final boolean kBrakeOff = true;
 	
 	//DIO's
-	//don't exist
+	public static final int FRONT_ARM_STOP = 0;
+	public static final int BACK_ARM_STOP = 1;
 
 	//PDP slots
 	//don't care

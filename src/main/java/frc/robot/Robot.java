@@ -122,8 +122,8 @@ public class Robot extends TimedRobot {
 			// Initialize the Operator Interface
 			OI.getInstance();
 
-			//Compressor c = new Compressor(0);
-			//c.setClosedLoopControl(true);
+			Compressor c = new Compressor(0);
+			c.setClosedLoopControl(true);
 			getArm().zeroSensors();
 			
 			//Robot.getDrive().setVisionPath();
@@ -226,6 +226,8 @@ public class Robot extends TimedRobot {
 			CrashTracker.logAutonomousInit();
 			// Start the subsystem loops.
 			mEnabledLooper.start();
+
+			getDrive().setOpenLoop(DriveSignal.NEUTRAL);
 			//getClimb().setDesiredDist(10);
 			//getClimb().startClimbing();
 			//getClimb().startHold();
@@ -234,10 +236,10 @@ public class Robot extends TimedRobot {
 			//Robot.getDrive().startPath();
 
 			//Command autonomousCommand = new AutoTest();
-			Command autonomousCommand = new AutoTest();
+			//Command autonomousCommand = new AutoTest();
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
-			autonomousCommand.start();
+			//autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");

@@ -236,7 +236,7 @@ public class Climb extends Subsystem {
                 default:
                     System.out.println("Unexpected climb control state: " + mClimbControlState);
                     break;
-                }
+				}
 			}
 			m_backEncoderLast = getBackEnc();
 			m_frontEncoderLast = getFrontEnc();
@@ -250,6 +250,10 @@ public class Climb extends Subsystem {
             mCSVWriter.flush();
         }
 	};
+
+	public void setClimbDrive(double motorLevel){
+		mDriveVictor.set(motorLevel);
+	}
 
 	PathFollower follower = null;
 	double m_frontHoldSetpoint, m_backHoldSetpoint,m_rollHoldSetpoint;

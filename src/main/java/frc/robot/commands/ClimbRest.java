@@ -14,7 +14,7 @@ public class ClimbRest extends Command {
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
-    Robot.getClimb().setDesiredDist(-20);
+    Robot.getClimb().setDesiredDist(-18);
     Robot.getClimb().startResting();
   }
 
