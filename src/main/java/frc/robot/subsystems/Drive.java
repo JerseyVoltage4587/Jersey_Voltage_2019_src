@@ -438,6 +438,9 @@ public class Drive extends Subsystem {
             limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
 			driveBackwards = true;
 		}
+		limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
+		driveBackwards = false;
+
 		NetworkTableEntry tv = limelightTable.getEntry("tv");
 		double v = tv.getDouble(0.0);
 		NetworkTableEntry tx = limelightTable.getEntry("tx");
@@ -462,8 +465,8 @@ public class Drive extends Subsystem {
 		double left = 0;
 		double right = 0;
 
-		left = (distRobot * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);
-		right = (distRobot * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);
+		left = OI.getInstance().getDrive()*0.5 + (x * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);
+		right = OI.getInstance().getDrive()*0.5 - (x * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);
 		if(Math.abs(left)<Constants.kVisionMinMotorLevel && Math.abs(right) < Constants.kVisionMinMotorLevel){
 			left = Constants.kVisionMinMotorLevel * Math.signum(left);
 			right = Constants.kVisionMinMotorLevel * Math.signum(right);

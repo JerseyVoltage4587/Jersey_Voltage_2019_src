@@ -113,10 +113,10 @@ public class Robot extends TimedRobot {
 			mEnabledLooper = new Looper();
 			mSubsystemManager = new SubsystemManager(Arrays.asList(
 														Drive.getInstance()
-														,Arm.getInstance()
+														//,Arm.getInstance()
 														,Climb.getInstance()
-														,Lift.getInstance()
-														,Intake.getInstance()
+														//,Lift.getInstance()
+														//,Intake.getInstance()
 														));
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface

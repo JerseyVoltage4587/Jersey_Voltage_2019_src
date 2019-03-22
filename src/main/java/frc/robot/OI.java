@@ -11,6 +11,7 @@ import frc.robot.util.JoyButton;
 import frc.robot.commands.StartVisionDrive;
 import frc.robot.subsystems.Intake.IntakeControlState;
 import frc.robot.commands.ClimbHalfOn;
+import frc.robot.commands.ClimbLevel2;
 import frc.robot.commands.ClimbRest;
 import frc.robot.commands.ClimbUp;
 import frc.robot.commands.SetClimbMotor;
@@ -123,8 +124,8 @@ public class OI {
 		leftBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
 		leftTrigger1.whenPressed(new SetIntakeState(IntakeControlState.SHOOT_BALL));
 		leftTrigger1.whenReleased(new SetIntakeState(IntakeControlState.OFF));
-		rightTrigger1.whenPressed(new StartSimpleVision());
-		rightTrigger1.whenReleased(new StartOpenLoop());
+		rightBumper1.whenPressed(new StartSimpleVision());
+		rightBumper1.whenReleased(new StartOpenLoop());
 		leftStickButton1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
 		rightStickButton1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
 
@@ -132,9 +133,10 @@ public class OI {
 		buttonA2.whenPressed(new ClimbUp());
 		buttonB2.whenPressed(new ClimbHalfOn());
 		buttonY2.whenPressed(new ClimbRest());
+		buttonX2.whenPressed(new ClimbLevel2());
 
-		rightBumper1.whenPressed(new SetClimbMotor(-0.5));
-		rightBumper1.whenReleased(new SetClimbMotor(0.0));
+		rightTrigger1.whenPressed(new SetClimbMotor(-0.5));
+		rightTrigger1.whenReleased(new SetClimbMotor(0.0));
 		
 	}
 
