@@ -62,6 +62,7 @@ public class Intake extends Subsystem {
 		INTAKE_HATCH,
 		HOLD_HATCH,
 		SHOOT_BALL,
+		EXTRA
     }
     public IntakeControlState getState(){
     	return mIntakeControlState;
@@ -94,7 +95,8 @@ public class Intake extends Subsystem {
 	}
 	public void startIntakeHatch() {
     	synchronized (Intake.this) {
-    		mIntakeControlState = IntakeControlState.INTAKE_HATCH;
+			mIntakeControlState = IntakeControlState.INTAKE_HATCH;
+			m_startIntakeHatch = true;
     	}
 	}
 	public void startHoldHatch() {
@@ -104,13 +106,18 @@ public class Intake extends Subsystem {
 	}
 	public void setState(IntakeControlState state){
 		synchronized (Intake.this) {
-    		mIntakeControlState = state;
+			mIntakeControlState = state;
+			if(state == IntakeControlState.INTAKE_HATCH){
+				m_startIntakeHatch = true;
+			}
     	}
 	}
 	private boolean m_hasHatch = true;
 	public boolean getHasHatch(){
 		return m_hasHatch;
 	}
+
+	private boolean m_startIntakeHatch = false;
 
 	
 	AsyncAdHocLogger asyncAdHocLogger;
@@ -143,8 +150,8 @@ public class Intake extends Subsystem {
 					m_hasHatch = false;
                     break;
 				case INTAKE_BALL:
-					mIntakeTalon.set(1.0);
-					pokeIn();
+					mIntakeTalon.set(-1.0);
+					pokeOut();
 					openFingers();
 					brakeOff();
 					m_hasHatch = false;
@@ -161,28 +168,50 @@ public class Intake extends Subsystem {
 					break;
 				case HOLD_BALL:
 					mIntakeTalon.set(0.0);
-					pokeIn();
+					if(Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket1
+						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket2
+						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket3){
+							pokeIn();
+					}else{
+						pokeOut();
+					}
 					openFingers();
 					brakeOn();
 					m_hasHatch = false;
 					break;
 				case SHOOT_BALL:
-					mIntakeTalon.set(-0.35);
-					pokeIn();
+					mIntakeTalon.set(0.35);
+					if(Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket1
+						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket2
+						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket3){
+							pokeIn();
+					}else{
+						pokeOut();
+					}
 					openFingers();
 					brakeOff();
 					m_hasHatch = false;
 					break;
 				case INTAKE_HATCH:
 					mIntakeTalon.set(0.0);
-					pokeOut();
 					closeFingers();
 					brakeOff();
 					m_hasHatch = true;
+
+					if(m_startIntakeHatch){
+						pokeOut();
+						count = 0;
+						m_startIntakeHatch = false;
+					}
+					count++;
+					if(count >= 10){
+						pokeIn();
+					}
+
 					break;
 				case HOLD_HATCH:
 					mIntakeTalon.set(0.0);
-					pokeOut();
+					pokeIn();
 					openFingers();
 					brakeOff();
 					m_hasHatch = true;

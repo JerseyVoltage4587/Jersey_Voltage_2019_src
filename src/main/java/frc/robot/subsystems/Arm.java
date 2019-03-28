@@ -4,8 +4,12 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.CANifier;
+import com.ctre.phoenix.CANifier.GeneralPin;
+import com.ctre.phoenix.CANifier.PinValues;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.RemoteLimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import frc.robot.Constants;
@@ -28,8 +32,13 @@ public class Arm extends Subsystem {
     			}
     		}
     	}
-    	return mInstance;
-    }
+		return mInstance;
+	}
+	
+	private boolean m_holdArmForDefense = false;
+	public void setHoldArmForDefense(boolean x){
+		m_holdArmForDefense = x;
+	}
     
     int iCall = 0;
     private final Loop mLoop = new Loop() {
@@ -57,25 +66,36 @@ public class Arm extends Subsystem {
         		xIsAtSetpoints = mIsAtSetpoints;
             	mArmSetpoint = xArmSetpoint;
             }
-			if(backStop.get() == false){
-				can.setQuadraturePosition(convertDegToEnc(-110),10);//convertDegToEnc(Constants.kArmSoftStopLow), 10);
-			}
-			if(frontStop.get() == false){
-				can.setQuadraturePosition(convertDegToEnc(110),10);//convertDegToEnc(Constants.kArmSoftStopHigh), 10);
-			}
+			/*if(backStop.get() == false){
+				//can.setQuadraturePosition(convertDegToEnc(Constants.kArmSoftStopLow), 10);
+			}*/
+			/*if(frontStop.get() == false){
+				can.setQuadraturePosition(convertDegToEnc(Constants.kArmSoftStopHigh), 10);
+			}*/
 			//doPathFollowing();
-			double motorLevel = OI.getInstance().getDrive2();
-			if(backStop.get() == false){
-				if(motorLevel <= 0){
-					motorLevel = 0;
+			if(can.getGeneralInput(GeneralPin.LIMF) == false){
+				//at limit
+				if(can.getQuadraturePosition() != 0){
+					can.setQuadraturePosition(0,10);
 				}
 			}
-			if(frontStop.get() == false){
+
+			if(m_holdArmForDefense){
+				doPathFollowing();
+			}else{
+				double motorLevel = OI.getInstance().getDrive2();
+				armMotor.set(-motorLevel);
+			}
+			/*if(backStop.get() == false){
+				if(motorLevel <= 0){
+					//motorLevel = 0;
+				}
+			}*/
+			/*if(frontStop.get() == false){
 				if(motorLevel >= 0){
 					motorLevel = 0;
 				}
-			}
-			armMotor.set(-motorLevel);
+			}*/
 
 
             logValues();
@@ -108,38 +128,38 @@ public class Arm extends Subsystem {
 		if (error>40.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmMaxMotorUp;
-			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if (error>5.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmSlowMotorUp;
-			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if(error<-40.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmMaxMotorDown;
-			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if(error<-5.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmSlowMotorDown;
-			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else{
 			slowDown = true;
 			arm_motor_level = 0.0;//getArmPIDOutput(mArmSetpoint);
-			arm_motor_level -= 3*Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= 3*Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}
 
 		if(slowDown){
 			arm_motor_level = getArmPIDOutput(mArmSetpoint);
-			arm_motor_level -= 3*Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= 3*Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}
 
-		if(mArmSetpoint > 45 && frontStop.get() == false){
+		/*if(mArmSetpoint > 45 && frontStop.get() == false){
 			//at front stop
 			arm_motor_level = 0;
-		}
-		if(mArmSetpoint < -45 && backStop.get() == false){
+		}*/
+		//if(mArmSetpoint < -45 && backStop.get() == false){
 			//at back stop
-			arm_motor_level = 0;
-		}
+			//arm_motor_level = 0;
+		//}
 		
 		SmartDashboard.putNumber("arm setpoint", mArmSetpoint);
 		SmartDashboard.putNumber("arm motorlevel", arm_motor_level);
@@ -196,18 +216,23 @@ public class Arm extends Subsystem {
     // Hardware
 	private final WPI_TalonSRX armMotor;
 	private final CANifier can;
-	private final DigitalInput frontStop, backStop;
+	//private final DigitalInput backStop;//frontStop, backStop;
     
     private Arm() {
 		armMotor = new WPI_TalonSRX(RobotMap.ARM_TALON);
+		armMotor.configFactoryDefault();
         armMotor.setNeutralMode(NeutralMode.Brake);
 		armMotor.configNeutralDeadband(0.01, 10);
-		armMotor.setInverted(true);
+		armMotor.setInverted(false);
+		
 		can = new CANifier(RobotMap.CANIFIER);
 		can.configFactoryDefault();
 
-		frontStop = new DigitalInput(RobotMap.FRONT_ARM_STOP);
-		backStop = new DigitalInput(RobotMap.BACK_ARM_STOP);
+		armMotor.configForwardLimitSwitchSource(RemoteLimitSwitchSource.RemoteCANifier, 
+												LimitSwitchNormal.NormallyOpen, can.getDeviceID(), 10);
+		armMotor.configClearPositionOnLimitF(true, 10);
+		//frontStop = new DigitalInput(RobotMap.FRONT_ARM_STOP);
+		//backStop = new DigitalInput(RobotMap.BACK_ARM_STOP);
 		
         mDebugOutput = new DebugOutput();
         mCSVWriter = new AsyncStructuredLogger<DebugOutput>("ArmLog", DebugOutput.class);
@@ -230,9 +255,9 @@ public class Arm extends Subsystem {
     	double error = setpoint_to_use - mArmPos;
     	double output = error * Constants.kArmHoldKp + Math.min(error, mLastArmError) * Constants.kArmHoldKi - (error - mLastArmError) * Constants.kArmHoldKd;
 		if(output>=0){//TODO should use error instead of output, output might flip signs erratically
-			output -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			output -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else{
-			output += Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			output += Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}
 		mLastArmError = error;
 		return output;
@@ -250,9 +275,12 @@ public class Arm extends Subsystem {
 		SmartDashboard.putNumber("Arm encoder", can.getQuadraturePosition()*-1);
 		SmartDashboard.putNumber("re-zero forward pt",convertDegToEnc(Constants.kArmSoftStopHigh));
 		SmartDashboard.putNumber("Arm Motor Percent", armMotor.get());
-		SmartDashboard.putBoolean("Arm Front Stop",frontStop.get());
-		SmartDashboard.putBoolean("Arm Back Stop",backStop.get());
-    }
+		SmartDashboard.putBoolean("Arm Front Stop", can.getGeneralInput(GeneralPin.LIMF));
+		
+		//SmartDashboard.putBoolean("Arm Back Stop",backStop.get());
+	}
+	
+	PinValues pv = new PinValues();
 
     // Logging
     private DebugOutput mDebugOutput;

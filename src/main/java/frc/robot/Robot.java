@@ -74,17 +74,11 @@ public class Robot extends TimedRobot {
 		return m_PDP;
 	}
 	
-	public static void setVisionPipeline(){
-		NetworkTable ll0 = NetworkTableInstance.getDefault().getTable("limelight-front");
+	public static void setVisionPipeline(int pipeline){
+		//NetworkTable ll0 = NetworkTableInstance.getDefault().getTable("limelight-front");
 		NetworkTable ll1 = NetworkTableInstance.getDefault().getTable("limelight-back");
-		ll0.getEntry("pipeline").forceSetNumber(0);
-		ll1.getEntry("pipeline").forceSetNumber(0);
-	}
-	public static void setDriverPipeline(){
-		NetworkTable ll0 = NetworkTableInstance.getDefault().getTable("limelight-front");
-		NetworkTable ll1 = NetworkTableInstance.getDefault().getTable("limelight-back");
-		ll0.getEntry("pipeline").forceSetNumber(1);
-		ll1.getEntry("pipeline").forceSetNumber(1);
+		//ll0.getEntry("pipeline").forceSetNumber(pipeline);
+		ll1.getEntry("pipeline").forceSetNumber(pipeline);
 	}
 	/**
 	 * Constructor
@@ -113,10 +107,10 @@ public class Robot extends TimedRobot {
 			mEnabledLooper = new Looper();
 			mSubsystemManager = new SubsystemManager(Arrays.asList(
 														Drive.getInstance()
-														//,Arm.getInstance()
+														,Arm.getInstance()
 														,Climb.getInstance()
-														//,Lift.getInstance()
-														//,Intake.getInstance()
+														,Lift.getInstance()
+														,Intake.getInstance()
 														));
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
@@ -192,6 +186,7 @@ public class Robot extends TimedRobot {
 			double yRobot = vm.getRobotY();
 			SmartDashboard.putNumber("xRobot", xRobot);
 			SmartDashboard.putNumber("yRobot", yRobot);
+			setVisionPipeline(1);
 
 			allPeriodic();
 		} catch (Throwable t) {

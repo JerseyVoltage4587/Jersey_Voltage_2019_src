@@ -14,9 +14,12 @@ import frc.robot.commands.ClimbHalfOn;
 import frc.robot.commands.ClimbLevel2;
 import frc.robot.commands.ClimbRest;
 import frc.robot.commands.ClimbUp;
+import frc.robot.commands.HoldArmForDefense;
+import frc.robot.commands.ManualArm;
 import frc.robot.commands.SetClimbMotor;
 import frc.robot.commands.SetArmSetpoint;
 import frc.robot.commands.SetLiftSetpoint;
+import frc.robot.commands.SetVisionPipeline;
 import frc.robot.commands.SetCameraMode;
 import frc.robot.commands.StartOpenLoop;
 import frc.robot.commands.StartSimpleVision;
@@ -36,10 +39,10 @@ public class OI {
 	Button	  buttonA1, buttonB1, buttonX1, buttonY1, leftBumper1, rightBumper1,startButton1, leftStickButton1, rightStickButton1;
 	JoyButton leftTrigger1, rightTrigger1;
 	Joystick  stick2;
-	Button	  buttonA2, buttonB2, buttonX2, buttonY2, leftBumper2, rightBumper2;
+	Button	  buttonA2, buttonB2, buttonX2, buttonY2, leftBumper2, rightBumper2, leftStickButton2, rightStickButton2, startButton2;
 	JoyButton leftTrigger2, rightTrigger2;
 	Joystick  driverStation;
-	Button    toggleSwitch0, toggleSwitch1, toggleSwitch2, toggleSwitch3, toggleSwitch4, tinesSwitch, debugSwitch;
+	Button    toggleSwitch0, toggleSwitch1, toggleSwitch2, toggleSwitch3, toggleSwitch4, tinesSwitch, visionSwitch;
 	Button	  count0Button1, count0Button2, count1Button1, count1Button2, count2Button1, count2Button2, count3Button1, count3Button2;
 
 	// Return the singleton OI object, creating it if necessary.
@@ -79,12 +82,15 @@ public class OI {
     	leftTrigger2	= new JoyButton(stick2, JoyButton.JoyDir.DOWN, 2);
     	rightBumper2	= new JoystickButton(stick2, 6);
     	rightTrigger2	= new JoyButton(stick2, JoyButton.JoyDir.DOWN, 3);
+		leftStickButton2= new JoystickButton(stick2, 9);
+		rightStickButton2=new JoystickButton(stick2, 10);
+		startButton2	= new JoystickButton(stick2, 8);
     	
     	driverStation   = new Joystick(0);
     	toggleSwitch0   = new JoystickButton(driverStation, 1);
     	toggleSwitch1   = new JoystickButton(driverStation, 2);
     	tinesSwitch   	= new JoystickButton(driverStation, 3);
-    	debugSwitch 	= new JoystickButton(driverStation, 7);
+    	visionSwitch 	= new JoystickButton(driverStation, 7);
     	// turn auto off button 14
     	count0Button1 	= new JoystickButton(driverStation, 11);
     	count0Button2 	= new JoystickButton(driverStation, 10);
@@ -126,17 +132,26 @@ public class OI {
 		leftTrigger1.whenReleased(new SetIntakeState(IntakeControlState.OFF));
 		rightBumper1.whenPressed(new StartSimpleVision());
 		rightBumper1.whenReleased(new StartOpenLoop());
+		rightTrigger1.whenPressed(new SetClimbMotor(-0.5));
+		rightTrigger1.whenReleased(new SetClimbMotor(0.0));
 		leftStickButton1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
 		rightStickButton1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
-
 		
 		buttonA2.whenPressed(new ClimbUp());
 		buttonB2.whenPressed(new ClimbHalfOn());
 		buttonY2.whenPressed(new ClimbRest());
 		buttonX2.whenPressed(new ClimbLevel2());
+		rightTrigger2.whenPressed(new SetLiftSetpoint(2.75));
+		leftTrigger2.whenPressed(new SetLiftSetpoint(0));
+		rightStickButton2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket1));//lvl 1 rocket
+		startButton2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket2));//lvl 2 rocket
+		rightBumper2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket3));//lvl 3 rocket
+		//leftBumper2.whenPressed(new HoldArmForDefense());
+		//leftStickButton2.whenPressed(new ManualArm());
 
-		rightTrigger1.whenPressed(new SetClimbMotor(-0.5));
-		rightTrigger1.whenReleased(new SetClimbMotor(0.0));
+
+		visionSwitch.whenPressed(new SetVisionPipeline(1));
+		visionSwitch.whenReleased(new SetVisionPipeline(0));
 		
 	}
 
@@ -153,7 +168,7 @@ public class OI {
 	}
 
 	public double getDrive2(){
-		return -0.5 * stick2.getRawAxis(1);
+		return 0.25 * stick2.getRawAxis(1);
 	}
 	
 	public int getPOV() {

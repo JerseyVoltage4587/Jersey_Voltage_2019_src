@@ -9,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.RobotMap;
 import frc.robot.loops.Loop;
 import frc.robot.loops.Looper;
@@ -142,6 +143,15 @@ public class Lift extends Subsystem {
 				xLiftSetpoint = Constants.kLiftMaxHeight;
 			}else if(setpoint<0){
 				xLiftSetpoint = 0;
+			}
+			if(Robot.getIntake().getHasHatch() == false){
+				if(setpoint == Constants.kLiftRocket1){
+					xLiftSetpoint = Constants.kLiftBallRocket1;
+				}else if(setpoint == Constants.kLiftRocket2){
+					xLiftSetpoint = Constants.kLiftBallRocket2;
+				}else if(setpoint == Constants.kLiftRocket3){
+					xLiftSetpoint = Constants.kLiftBallRocket3;
+				}
 			}
     	}
     }

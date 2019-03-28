@@ -24,18 +24,18 @@ public class RobotMap {
 	public static final int ARM_TALON = 50;
 	public static final int INTAKE_TALON = 51;
 
-	public static final int CANIFIER = 0;
+	public static final int CANIFIER = 1;
 
 	//PWM's
 	//don't exist
 	
 	//Solenoid's
-	public static final int POKE = 0;
-	public static final int FINGERS = 1;
+	public static final int FINGERS = 0;
+	public static final int POKE = 1;
 	public static final int INTAKE_BRAKE = 2;
 
-	public static final boolean kPokeOut = false;
-	public static final boolean kPokeIn = true;
+	public static final boolean kPokeOut = true;
+	public static final boolean kPokeIn = false;
 	public static final boolean kFingersOpen = false;
 	public static final boolean kFingersClosed = true;
 	public static final boolean kBrakeOn = false;
