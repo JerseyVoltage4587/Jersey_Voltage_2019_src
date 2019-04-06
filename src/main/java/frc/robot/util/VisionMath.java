@@ -41,14 +41,7 @@ public class VisionMath {
 
     public void findRobotPos(){
         NetworkTable limelightTable;
-        if(Robot.getArm().getArmSetpoint() > 0){
-            //front camera
-            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
-        }else{
-            //back camera
-            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
-        }
-        limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
+        limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
         NetworkTableEntry tve = limelightTable.getEntry("tv");
         double tv = tve.getDouble(0.0);
         if(tv == 0){

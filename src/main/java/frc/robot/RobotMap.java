@@ -21,8 +21,9 @@ public class RobotMap {
 	public static final int CLIMB_DRIVE_VICTOR = 5;
 	public static final int LIFT_TALON = 40;
 	public static final int LIFT_VICTOR = 41;
-	public static final int ARM_TALON = 50;
+	public static final int ARM_VICTOR = 31;
 	public static final int INTAKE_TALON = 51;
+	public static final int HATCH_TALON = 50;
 
 	public static final int CANIFIER = 1;
 
@@ -30,8 +31,8 @@ public class RobotMap {
 	//don't exist
 	
 	//Solenoid's
-	public static final int FINGERS = 0;
-	public static final int POKE = 1;
+	public static final int FINGERS = 1;
+	public static final int POKE = 0;
 	public static final int INTAKE_BRAKE = 2;
 
 	public static final boolean kPokeOut = true;
@@ -42,8 +43,10 @@ public class RobotMap {
 	public static final boolean kBrakeOff = true;
 	
 	//DIO's
-	public static final int FRONT_ARM_STOP = 0;
-	public static final int BACK_ARM_STOP = 1;
+	public static final int FRONT_ARM_STOP = 2;
+	public static final int BACK_ARM_STOP = 3;
+	public static final int LIFT_ENC_A = 0;
+	public static final int LIFT_ENC_B = 1;
 
 	//PDP slots
 	//don't care

@@ -82,9 +82,9 @@ public class Constants{
     public static final double kClimbHoldGravityMotorLevel = 0.1;
 
     //Lift
-    public static final double kLiftTicsPerRev = 4096.0;
-    public static final double kLiftInchesPerRevHighGear = 2.0 * Math.PI * (24.0/72.0);
-    public static final double kLiftInchesPerTicHighGear = 1.06 * Constants.kLiftInchesPerRevHighGear / Constants.kLiftTicsPerRev;//2635
+    public static final double kLiftTicsPerRev = 256.0;//4096.0;
+    public static final double kLiftInchesPerRevHighGear = 2.0 * Math.PI;// * (24.0/72.0);
+    public static final double kLiftInchesPerTicHighGear = Constants.kLiftInchesPerRevHighGear / Constants.kLiftTicsPerRev;//2635
     
     public static final double kLiftMaxMotorUp = 1.0;
     public static final double kLiftMaxMotorDown = -0.45;
@@ -96,39 +96,44 @@ public class Constants{
     public static final double kLiftKp = 0.05;//0.001;
     public static final double kLiftHoldBallPower = 0;
 
-    public static final double kLiftRocket1 = 0.01;
-    public static final double kLiftRocket2 = 2.3;
-    public static final double kLiftRocket3 = 4.6;
+    public static final double kLiftCargoShip = 1.35;
 
-    public static final double kLiftBallRocket1 = 1.6;
-    public static final double kLiftBallRocket2 = 3.95;
-    public static final double kLiftBallRocket3 = 4.8;//arm 30 deg
+    public static final double kLiftRocket1 = 0.01;
+    public static final double kLiftRocket2 = 2.25;
+    public static final double kLiftRocket3 = 4.3;
+
+    public static final double kLiftBallRocket1 = 0.001;
+    public static final double kLiftBallRocket2 = 1.35;
+    public static final double kLiftBallRocket3 = 3.6;//arm 30 deg
 
     public static final double kLiftStage2Pos = 2.1;//ft
     public static final double kLiftMaxHeight = 4.5;//ft
 
     //Arm
     public static final double kArmTicsPerRev = 4096.0;
-    public static final double kArmDegreesPerRev = 360.0 * (24.0/84.0) * (50.0/84.0); // gear ratios
+    public static final double kArmDegreesPerRev = 360.0 * (15.0/26.0); // gear ratios
     public static final double kArmDegreesPerTic = Constants.kArmDegreesPerRev / Constants.kArmTicsPerRev; //-425
     public static final double kArmMaxAmps = 45;
     public static final long kArmTimeSinceHitMax = 1000*1000*1000;
-    public static final double kArmMaxMotorUp = 1.0;
-    public static final double kArmMaxMotorDown = -1.0;
-    public static final double kArmSlowMotorUp = 0.7;
-    public static final double kArmSlowMotorDown = -0.7;
+    public static final double kArmMaxMotorUp = 0.75;
+    public static final double kArmMaxMotorDown = -0.75;
+    public static final double kArmSlowMotorUp = 0.2;
+    public static final double kArmSlowMotorDown = -0.2;
     public static final double kArmJoystickDeadband = 0.1;
-    public static final double kArmSoftStopHigh = 90.0;//100
-    public static final double kArmSoftStopLow = -90.0;//-100
-    public static final double kArmHatchStopLow = -90.0;
-    public static final double kArmHatchStopHigh = 90.0;
+    public static final double kArmSoftStopHigh = 120.0;//100
+    public static final double kArmSoftStopLow = -5.0;//-100
     public static final double kArmDegTolerance = 5.0;
+    public static final double kArmDegSafeHatch = 10.0;
+    public static final double kArmHoldBallDeg = 20.0;
+    public static final double kArmIntakeBallDeg = 107.0;
+    public static final double kArmCargoShipDeg = 45.0;
 
     public static final double kArmIntakeDeg = -183.5;
     public static final double kArmClimbDeg = 0.0;
     
     //Intake
-    public static final double kIntakeStallCurrent = 25;//amps
+    public static final double kIntakeStallCurrent = 10;//amps
+    public static final double kHatchStallCurrent = 15;//amps
     
     //Tines
     public static final double kTinesMotorLevelPerIntervalUp = 0.01;
@@ -153,10 +158,10 @@ public class Constants{
     public static final double kPathHoldKp = 0.0005;
     public static final double kPathHoldKg = 0.0001;
     
-    public static final double kArmHoldKp = 0.015;
+    public static final double kArmHoldKp = 0.005;
     public static final double kArmHoldKi = 0.0;
     public static final double kArmHoldKd = 0.0;
-    public static final double kArmHoldPower = 0.45;
+    public static final double kArmHoldPower = 0.1;//0.35
 
     public static final double kTestVelTarget = 1700;
     public static final double kTestDistTarget = 50000;

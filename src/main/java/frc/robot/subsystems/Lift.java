@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -50,7 +51,7 @@ public class Lift extends Subsystem {
 
         @Override
         public void onLoop(double timestamp) {
-            mEncoder = liftTalon.getSelectedSensorPosition();
+            mEncoder = liftEncoder.get();//liftTalon.getSelectedSensorPosition();
         	mCurrentTime = System.nanoTime();
         	mPos = getPosFeet();
         	mVel = getVelFPS();
@@ -147,10 +148,16 @@ public class Lift extends Subsystem {
 			if(Robot.getIntake().getHasHatch() == false){
 				if(setpoint == Constants.kLiftRocket1){
 					xLiftSetpoint = Constants.kLiftBallRocket1;
+					Robot.getArm().setArmSetpoint(Constants.kArmCargoShipDeg);
 				}else if(setpoint == Constants.kLiftRocket2){
 					xLiftSetpoint = Constants.kLiftBallRocket2;
+					Robot.getArm().setArmSetpoint(Constants.kArmHoldBallDeg);
 				}else if(setpoint == Constants.kLiftRocket3){
 					xLiftSetpoint = Constants.kLiftBallRocket3;
+					Robot.getArm().setArmSetpoint(Constants.kArmHoldBallDeg);
+				}
+				if(setpoint == Constants.kLiftCargoShip){
+					Robot.getArm().setArmSetpoint(Constants.kArmCargoShipDeg);
 				}
 			}
     	}
@@ -173,20 +180,23 @@ public class Lift extends Subsystem {
     // Hardware
 	private final WPI_TalonSRX liftTalon; 
 	private final WPI_VictorSPX liftVictor;
+	private final Encoder liftEncoder;
     
     private Lift() {
 		liftTalon = new WPI_TalonSRX(RobotMap.LIFT_TALON);
 		liftTalon.setInverted(true);
-        liftTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
+        //liftTalon.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
         liftTalon.changeMotionControlFramePeriod(5);
-        liftTalon.setSensorPhase(true);
+        //liftTalon.setSensorPhase(true);
         liftTalon.setNeutralMode(NeutralMode.Brake);
 		liftTalon.configNeutralDeadband(0.01, 10);
-		liftTalon.setSelectedSensorPosition(0);
+		//liftTalon.setSelectedSensorPosition(0);
 
 		liftVictor = new WPI_VictorSPX(RobotMap.LIFT_VICTOR);
 		liftVictor.setInverted(true);
 		liftVictor.follow(liftTalon);
+
+		liftEncoder = new Encoder(RobotMap.LIFT_ENC_A, RobotMap.LIFT_ENC_B);
 		
         mDebugOutput = new DebugOutput();
         mCSVWriter = new AsyncStructuredLogger<DebugOutput>("LiftLog" ,DebugOutput.class);
@@ -198,7 +208,7 @@ public class Lift extends Subsystem {
     
     private double getPosFeet(){
 		//return mEncoder * Constants.kLiftInchesPerTicHighGear / 12.0;
-		return liftTalon.getSelectedSensorPosition() * Constants.kLiftInchesPerTicHighGear / 12.0;
+		return /*liftTalon.getSelectedSensorPosition()*/liftEncoder.get() * Constants.kLiftInchesPerTicHighGear / 12.0;
     }
     
     private double getVelFPS(){
@@ -214,7 +224,7 @@ public class Lift extends Subsystem {
     public void outputToSmartDashboard() {
     	SmartDashboard.putNumber("Lift Height (ft)", getPosFeet());
     	SmartDashboard.putNumber("Lift Setpoint", getLiftSetpoint());
-		SmartDashboard.putNumber("Lift encoder", liftTalon.getSelectedSensorPosition());
+		SmartDashboard.putNumber("Lift encoder", liftEncoder.get());//liftTalon.getSelectedSensorPosition());
 		SmartDashboard.putNumber("Lift Motor", liftTalon.get());
     }
 

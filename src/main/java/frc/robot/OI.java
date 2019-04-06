@@ -18,6 +18,7 @@ import frc.robot.commands.HoldArmForDefense;
 import frc.robot.commands.ManualArm;
 import frc.robot.commands.SetClimbMotor;
 import frc.robot.commands.SetArmSetpoint;
+import frc.robot.commands.SetArmIntake;
 import frc.robot.commands.SetLiftSetpoint;
 import frc.robot.commands.SetVisionPipeline;
 import frc.robot.commands.SetCameraMode;
@@ -122,26 +123,26 @@ public class OI {
 		/*buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
 		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
 		*/
-		buttonA1.whenPressed(new SetArmSetpoint(-150));
-		buttonB1.whenPressed(new SetArmSetpoint(0));
-		buttonY1.whenPressed(new SetArmSetpoint(150));
-		buttonX1.whenPressed(new SetArmSetpoint(50));
 		
-		leftBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
-		leftTrigger1.whenPressed(new SetIntakeState(IntakeControlState.SHOOT_BALL));
-		leftTrigger1.whenReleased(new SetIntakeState(IntakeControlState.OFF));
+		//leftBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
+		//leftTrigger1.whenPressed(new SetIntakeState(IntakeControlState.SHOOT_BALL));
+		//leftTrigger1.whenReleased(new SetIntakeState(IntakeControlState.OFF));
+		buttonA1.whenPressed(new SetArmIntake(Constants.kArmSoftStopLow,IntakeControlState.OFF));
+		leftBumper1.whenPressed(new SetArmIntake(Constants.kArmIntakeBallDeg,IntakeControlState.INTAKE_BALL));
+		leftTrigger1.whenPressed(new SetArmIntake(Constants.kArmHoldBallDeg,IntakeControlState.SHOOT_BALL));
+		leftTrigger1.whenReleased(new SetArmIntake(Constants.kArmSoftStopLow,IntakeControlState.OFF));
 		rightBumper1.whenPressed(new StartSimpleVision());
 		rightBumper1.whenReleased(new StartOpenLoop());
 		rightTrigger1.whenPressed(new SetClimbMotor(-0.5));
 		rightTrigger1.whenReleased(new SetClimbMotor(0.0));
 		leftStickButton1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
-		rightStickButton1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
+		rightStickButton1.whenPressed(new SetIntakeState(IntakeControlState.PLACE_HATCH));
 		
 		buttonA2.whenPressed(new ClimbUp());
 		buttonB2.whenPressed(new ClimbHalfOn());
 		buttonY2.whenPressed(new ClimbRest());
 		buttonX2.whenPressed(new ClimbLevel2());
-		rightTrigger2.whenPressed(new SetLiftSetpoint(2.75));
+		rightTrigger2.whenPressed(new SetLiftSetpoint(Constants.kLiftCargoShip));
 		leftTrigger2.whenPressed(new SetLiftSetpoint(0));
 		rightStickButton2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket1));//lvl 1 rocket
 		startButton2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket2));//lvl 2 rocket

@@ -60,9 +60,11 @@ public class Intake extends Subsystem {
 		INTAKE_BALL, // used for autonomous driving
 		HOLD_BALL,
 		INTAKE_HATCH,
+		PLACE_HATCH,
 		HOLD_HATCH,
 		SHOOT_BALL,
-		EXTRA
+		EXTRA,
+		HOLD_HATCH_ANGLE,
     }
     public IntakeControlState getState(){
     	return mIntakeControlState;
@@ -72,6 +74,7 @@ public class Intake extends Subsystem {
 
     // Hardware
 	private final WPI_TalonSRX mIntakeTalon;
+	private final WPI_TalonSRX mHatchTalon;
 	private final Solenoid mIntakeBrake;
 
     // Logging
@@ -118,6 +121,11 @@ public class Intake extends Subsystem {
 	}
 
 	private boolean m_startIntakeHatch = false;
+	private int mArmSafeCount = 0;
+	private boolean mArmSafe = false;
+	public boolean getArmSafe(){
+		return mArmSafe;
+	}
 
 	
 	AsyncAdHocLogger asyncAdHocLogger;
@@ -139,19 +147,28 @@ public class Intake extends Subsystem {
         		//System.out.println("onLoop " + iCall + " " + mDriveControlState + " " + mLeftMaster.getControlMode());
 			}
 			//asyncAdHocLogger.q("intakeState: ").q(mIntakeControlState.name()).go();
+
+			if(mArmSafeCount > 10){
+				mArmSafe = true;
+			}else{
+				mArmSafe = false;
+			}
+
             synchronized (Intake.this) {
                 switch (mIntakeControlState) {
                 case OFF:
 					//do nothing
 					mIntakeTalon.set(0.0);
+					mHatchTalon.set(0.0);
 					pokeIn();
 					openFingers();
 					brakeOff();
 					m_hasHatch = false;
                     break;
 				case INTAKE_BALL:
-					mIntakeTalon.set(-1.0);
-					pokeOut();
+					mIntakeTalon.set(-0.7);
+					mHatchTalon.set(0.0);
+					pokeIn();
 					openFingers();
 					brakeOff();
 					m_hasHatch = false;
@@ -164,57 +181,83 @@ public class Intake extends Subsystem {
 						//have ball
 						setState(IntakeControlState.HOLD_BALL);
 						flashLEDs();
+						Robot.getArm().setArmSetpoint(Constants.kArmHoldBallDeg);
 					}
 					break;
 				case HOLD_BALL:
-					mIntakeTalon.set(0.0);
-					if(Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket1
+					mIntakeTalon.set(-0.15);
+					mHatchTalon.set(0.0);
+					/*if(Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket1
 						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket2
 						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket3){
 							pokeIn();
 					}else{
 						pokeOut();
-					}
+					}*/
+					pokeIn();
 					openFingers();
 					brakeOn();
 					m_hasHatch = false;
 					break;
 				case SHOOT_BALL:
 					mIntakeTalon.set(0.35);
-					if(Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket1
+					mHatchTalon.set(0.0);
+					/*if(Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket1
 						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket2
 						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket3){
 							pokeIn();
 					}else{
 						pokeOut();
-					}
+					}*/
+					pokeIn();
 					openFingers();
 					brakeOff();
 					m_hasHatch = false;
 					break;
 				case INTAKE_HATCH:
 					mIntakeTalon.set(0.0);
+					mHatchTalon.set(1.0);
 					closeFingers();
 					brakeOff();
-					m_hasHatch = true;
-
-					if(m_startIntakeHatch){
-						pokeOut();
+					pokeOut();
+	
+					if(mHatchTalon.getOutputCurrent() > Constants.kHatchStallCurrent){
+						count++;
+					}else{
 						count = 0;
-						m_startIntakeHatch = false;
 					}
-					count++;
 					if(count >= 10){
-						pokeIn();
+						//have hatch
+						m_hasHatch = true;
+						setState(IntakeControlState.HOLD_HATCH);
+						flashLEDs();
 					}
+					
 
-					break;
+				break;
 				case HOLD_HATCH:
 					mIntakeTalon.set(0.0);
-					pokeIn();
+					mHatchTalon.set(0.1);
+					pokeOut();
 					openFingers();
 					brakeOff();
 					m_hasHatch = true;
+					count = 0;
+					break;
+				case PLACE_HATCH:
+					mIntakeTalon.set(0.0);
+					pokeOut();
+					mHatchTalon.set(-1.0);
+					openFingers();
+					brakeOff();
+					count++;
+					if(count >= 10){
+						//placed hatch
+						m_hasHatch = false;
+						setState(IntakeControlState.OFF);
+						flashLEDs();
+					}
+
 					break;
                 default:
                     System.out.println("Unexpected climb control state: " + mIntakeControlState);
@@ -272,12 +315,18 @@ public class Intake extends Subsystem {
 		}
 	}
 	private void pokeOut(){
-		if(pokeState != RobotMap.kPokeOut){
-			poke.set(RobotMap.kPokeOut);
-			pokeState = RobotMap.kPokeOut;
+		mArmSafeCount = 0;
+		if(Robot.getArm().getHatchSafe() == true){
+			if(pokeState != RobotMap.kPokeOut){
+				poke.set(RobotMap.kPokeOut);
+				pokeState = RobotMap.kPokeOut;
+			}
+		}else{
+			pokeIn();
 		}
 	}
 	private void pokeIn(){
+		mArmSafeCount++;
 		if(pokeState != RobotMap.kPokeIn){
 			poke.set(RobotMap.kPokeIn);
 			pokeState = RobotMap.kPokeIn;
@@ -302,9 +351,13 @@ public class Intake extends Subsystem {
         mIntakeTalon.setNeutralMode(NeutralMode.Brake);
 		mIntakeTalon.configNeutralDeadband(0.01, 10);
 
-		poke = new Solenoid(1,RobotMap.POKE);
-		fingers = new Solenoid(1,RobotMap.FINGERS);
-		mIntakeBrake = new Solenoid(1,RobotMap.INTAKE_BRAKE);
+		mHatchTalon = new WPI_TalonSRX(RobotMap.HATCH_TALON);
+		mHatchTalon.setNeutralMode(NeutralMode.Brake);
+		mHatchTalon.configNeutralDeadband(0.01, 10);
+
+		poke = new Solenoid(RobotMap.POKE);
+		fingers = new Solenoid(RobotMap.FINGERS);
+		mIntakeBrake = new Solenoid(RobotMap.INTAKE_BRAKE);
 
         mDebugOutput = new DebugOutput();
         mCSVWriter = new AsyncStructuredLogger<DebugOutput>("IntakeLog" ,DebugOutput.class);
@@ -325,7 +378,8 @@ public class Intake extends Subsystem {
     public void outputToSmartDashboard() {
 		SmartDashboard.putNumber("intake percent output", mIntakeTalon.getMotorOutputPercent());
 		SmartDashboard.putNumber("intake motor current", mIntakeTalon.getOutputCurrent());
-    }
+		SmartDashboard.putBoolean("has hatch", m_hasHatch);
+	}
     
     public static class DebugOutput{
     	public long sysTime;

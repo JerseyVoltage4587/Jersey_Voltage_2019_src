@@ -11,6 +11,7 @@ import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.RemoteLimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import frc.robot.Constants;
 import frc.robot.OI;
@@ -53,9 +54,14 @@ public class Arm extends Subsystem {
 
         @Override
         public void onLoop(double timestamp) {
-            mArmEncoder = can.getQuadraturePosition()*-1;//armMotor.getSelectedSensorPosition();
+            mArmEncoder = can.getQuadraturePosition();//armMotor.getSelectedSensorPosition();
         	mArmPos = getPosDegrees();
-        	mArmError = mArmSetpoint - mArmPos;
+			mArmError = mArmSetpoint - mArmPos;
+			if(mArmPos <= Constants.kArmDegSafeHatch){
+				mHatchSafe = true;
+			}else{
+				mHatchSafe = false;
+			}
         	/*if(Math.abs(mArmError) < Constants.kLiftTolerance){
         		mIsAtSetpoints = true;
         	}else{
@@ -80,12 +86,7 @@ public class Arm extends Subsystem {
 				}
 			}
 
-			if(m_holdArmForDefense){
-				doPathFollowing();
-			}else{
-				double motorLevel = OI.getInstance().getDrive2();
-				armMotor.set(-motorLevel);
-			}
+			doPathFollowing();
 			/*if(backStop.get() == false){
 				if(motorLevel <= 0){
 					//motorLevel = 0;
@@ -121,6 +122,10 @@ public class Arm extends Subsystem {
     }
 	boolean slowDown = false;
 	private void doPathFollowing(){
+		if(Robot.getIntake().getArmSafe() == false){
+			//not safe to move arm
+			mArmSetpoint = 0.0;
+		}
 
     	double error = mArmSetpoint - mArmPos;
     	double arm_motor_level;
@@ -128,28 +133,28 @@ public class Arm extends Subsystem {
 		if (error>40.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmMaxMotorUp;
-			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if (error>5.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmSlowMotorUp;
-			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if(error<-40.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmMaxMotorDown;
-			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else if(error<-5.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmSlowMotorDown;
-			arm_motor_level -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else{
 			slowDown = true;
 			arm_motor_level = 0.0;//getArmPIDOutput(mArmSetpoint);
-			arm_motor_level -= 3*Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= 3*Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}
 
 		if(slowDown){
 			arm_motor_level = getArmPIDOutput(mArmSetpoint);
-			arm_motor_level -= 3*Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			arm_motor_level -= 3*Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}
 
 		/*if(mArmSetpoint > 45 && frontStop.get() == false){
@@ -186,10 +191,6 @@ public class Arm extends Subsystem {
 
 			double lowStop = Constants.kArmSoftStopLow;
 			double highStop = Constants.kArmSoftStopHigh;
-			if(Robot.getIntake().getHasHatch() == true){
-				lowStop = Constants.kArmHatchStopLow;
-				highStop = Constants.kArmHatchStopHigh;
-			}
 
 			if(setpoint < lowStop){
 				xArmSetpoint = lowStop;
@@ -212,14 +213,18 @@ public class Arm extends Subsystem {
     
 	// S U B S Y S T E M   A C C E S S
 	// These member variables can be accessed only by the subsystem
+	private boolean mHatchSafe = true;
+	public boolean getHatchSafe(){
+		return mHatchSafe;
+	}
 
     // Hardware
-	private final WPI_TalonSRX armMotor;
+	private final WPI_VictorSPX armMotor;
 	private final CANifier can;
 	//private final DigitalInput backStop;//frontStop, backStop;
     
     private Arm() {
-		armMotor = new WPI_TalonSRX(RobotMap.ARM_TALON);
+		armMotor = new WPI_VictorSPX(RobotMap.ARM_VICTOR);
 		armMotor.configFactoryDefault();
         armMotor.setNeutralMode(NeutralMode.Brake);
 		armMotor.configNeutralDeadband(0.01, 10);
@@ -244,7 +249,7 @@ public class Arm extends Subsystem {
     private double mArmError, mLastArmError;
 
     private double getPosDegrees(){
- 	   return can.getQuadraturePosition() * -1 * Constants.kArmDegreesPerTic;
+ 	   return can.getQuadraturePosition() * Constants.kArmDegreesPerTic;
 	}
 	
 	private int convertDegToEnc(double deg){
@@ -255,9 +260,9 @@ public class Arm extends Subsystem {
     	double error = setpoint_to_use - mArmPos;
     	double output = error * Constants.kArmHoldKp + Math.min(error, mLastArmError) * Constants.kArmHoldKi - (error - mLastArmError) * Constants.kArmHoldKd;
 		if(output>=0){//TODO should use error instead of output, output might flip signs erratically
-			output -= Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			output -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}else{
-			output += Math.cos(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
+			output += Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		}
 		mLastArmError = error;
 		return output;
@@ -272,11 +277,10 @@ public class Arm extends Subsystem {
     public void outputToSmartDashboard() {
     	SmartDashboard.putNumber("Arm Setpoint", getArmSetpoint());
     	SmartDashboard.putNumber("Arm Degrees", getPosDegrees());
-		SmartDashboard.putNumber("Arm encoder", can.getQuadraturePosition()*-1);
+		SmartDashboard.putNumber("Arm encoder", can.getQuadraturePosition());
 		SmartDashboard.putNumber("re-zero forward pt",convertDegToEnc(Constants.kArmSoftStopHigh));
 		SmartDashboard.putNumber("Arm Motor Percent", armMotor.get());
 		SmartDashboard.putBoolean("Arm Front Stop", can.getGeneralInput(GeneralPin.LIMF));
-		
 		//SmartDashboard.putBoolean("Arm Back Stop",backStop.get());
 	}
 	

@@ -346,80 +346,90 @@ public class Drive extends Subsystem {
         }
 	};
 	double m_lastLeftVel=0,m_lastRightVel=0;
+
+	double lastDesiredHdg=0;
 	private void doVisionDrive(){
+		NetworkTable limelightTable;
+		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+
+		NetworkTableEntry tv = limelightTable.getEntry("tv");
+		double v = tv.getDouble(0.0);
+		NetworkTableEntry tx = limelightTable.getEntry("tx");
+		double x = tx.getDouble(0.0);
+
 		vm.findRobotPos();
 		double xRobot = vm.getRobotX();
 		double yRobot = vm.getRobotY();
+		double distRobot = Math.sqrt((xRobot*xRobot)+(yRobot*yRobot));
+		distRobot -= Constants.kVisionDistToStop;
+		if(xRobot < 900 && yRobot < 900){
+			//have pic
+			lastDesiredDist = distRobot;
+			lastDesiredHdg = Gyro.getYaw() - x;
+			distMoved = 0;
+			notMovingCount = 0;
+		}else{
+			//don't have pic
+			x=0;
+		}
+		distRobot = lastDesiredDist - distMoved;//no change if we have pic
+
+		double angleError = Gyro.getYaw() - lastDesiredHdg;
+
 		double left = 0;
 		double right = 0;
-		long nowTime = System.nanoTime();
-		double leftVel = ((getLeftEnc() - m_leftEncoderLast) * Constants.kInchesPerTic / 12.0) / ((nowTime-m_lastTime) / 1000000000.0);
-		double rightVel = ((getRightEnc() - m_rightEncoderLast) * Constants.kInchesPerTic / 12.0) / ((nowTime-m_lastTime) / 1000000000.0);
 
-		if(leftVel == 0.0){leftVel = m_lastLeftVel;}
-		if(rightVel == 0.0){rightVel = m_lastRightVel;}
-		asyncAdHocLogger.q("leftEnc: ").q(getLeftEnc()).q(" leftEncLast: ").q(m_leftEncoderLast).go();
-
-        NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry tv = limelightTable.getEntry("tv");
-        double v = tv.getDouble(0.0);
-
-		if(Math.abs(yRobot) < (1.0/6.0)*Math.abs(xRobot)){
-			//safe zone
-			double angleToTarget = (Math.abs(yRobot)<0.01) ? 0 : Math.atan(xRobot/yRobot);
-			angleToTarget *= 180.0 / Math.PI;
-			double desiredHeading = Math.signum(angleToTarget) * (90 - Math.abs(angleToTarget));
-			double deltaAngle = desiredHeading - Gyro.getYaw();
-			if(deltaAngle<-180){deltaAngle+=360;}
-			if(deltaAngle>180){deltaAngle-=360;}
-
-			if(Math.abs(deltaAngle) < Constants.kVisionDeltaAngleTolerance){
-				leftVel = Math.max(leftVel, rightVel);
-				rightVel = leftVel;
-			}else{
-				double acc = Math.signum(deltaAngle) * Constants.kMaxAcceleration * 0.01;
-				leftVel += acc;
-				rightVel -= acc;
-			}
-			double averageVel = (leftVel + rightVel) / 2.0;
-			double timeToStop = averageVel / Constants.kMaxAcceleration;
-			double distToStop = averageVel * timeToStop / 2.0;
-			if(Math.abs(xRobot) <= distToStop){
-				//need to slow down
-				leftVel -= Constants.kMaxAcceleration * 0.01;
-				rightVel -= Constants.kMaxAcceleration * 0.01;
-			}
-
-			leftVel *= 12 / Constants.kInchesPerTic / 1000 * 10;//convert ft/sec to ticks/10ms
-			rightVel *= 12 / Constants.kInchesPerTic / 1000 * 10;
-			left = leftVel * Constants.kPathFollowKv;
-			right = rightVel * Constants.kPathFollowKv;
-			double leftMin = 0;
-			double rightMin = 0;
-			if(Math.signum(deltaAngle)<0){
-				leftMin = 0.1;
-				rightMin = 0.2;
-			}else{
-				leftMin = 0.2;
-				rightMin = 0.1;
-			}
-			if(left<leftMin){left=leftMin;}
-			if(right<rightMin){right=rightMin;}
+		left = OI.getInstance().getDrive()*0.5 + (angleError * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) + (angleError * Constants.kVisionXToMotor);
+		right = OI.getInstance().getDrive()*0.5 - (angleError * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) - (angleError * Constants.kVisionXToMotor);
+		if(Math.abs(left)<Constants.kVisionMinMotorLevel && Math.abs(right) < Constants.kVisionMinMotorLevel){
+			left = Constants.kVisionMinMotorLevel * Math.signum(left);
+			right = Constants.kVisionMinMotorLevel * Math.signum(right);
 		}
-		if(v==1){//have target
-			setMotorLevels(left, -right);
+
+		if(Math.abs(x) < Constants.kVisionXTolerance){
+			boolean done = false;
+			if(v == 0.0){
+				double deltaDist = (getLeftEnc() - m_leftEncoderLast) * Constants.kInchesPerTic;
+				if(Math.abs(deltaDist) < 0.01){notMovingCount++;}
+				distMoved += deltaDist;
+				asyncAdHocLogger.q("distMoved: ").q(distMoved).q(" lastDesiredDist: ").q(lastDesiredDist).go();
+				if(distMoved >= (lastDesiredDist - Constants.kVisionDistToStop)){
+					done = true;
+				}
+				if(notMovingCount>5){
+					done = true;
+				}
+			}else{
+				if(Math.abs(xRobot) <= Constants.kVisionDistToStop){
+					done = true;
+				}
+			}
+			if(done){
+				setOpenLoop(DriveSignal.NEUTRAL);
+				left=0;
+				right=0;
+				limelightTable.getEntry("ledMode").forceSetNumber(2);
+					
+				m_timer.schedule(new FlashTimer(),2000);
+			}
 		}
-		m_lastLeftVel = leftVel;
-		m_lastRightVel = rightVel;
+		
+		asyncAdHocLogger.q("left: ").q(left).q(" leftLast: ").q(m_leftMotorLevelLast).q(" right: ").q(right).q(" rightLast: ").q(m_rightMotorLevelLast).go();
+		double leftRightRatio = Math.abs(left/right);
+		if((left - m_leftMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
+			left = m_leftMotorLevelLast + (Constants.kVisionMotorLevelAccMax * leftRightRatio);
+		}
+		if((right - m_rightMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
+			right = m_rightMotorLevelLast + (Constants.kVisionMotorLevelAccMax / leftRightRatio);
+		}
+
+		setMotorLevels(left, -right);
 	}
 
 	public class FlashTimer extends TimerTask{
 		public void run(){
-			NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
+			NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 			limelightTable.getEntry("ledMode").forceSetNumber(0);
-			
-			NetworkTable limelightTable1 = NetworkTableInstance.getDefault().getTable("limelight-back");
-			limelightTable1.getEntry("ledMode").forceSetNumber(0);
 		}
 	}
 
@@ -428,18 +438,7 @@ public class Drive extends Subsystem {
 	int notMovingCount;
 	private void doSimpleVisionDrive(){
 		NetworkTable limelightTable;
-		boolean driveBackwards;
-        if(Robot.getArm().getArmSetpoint() > 0){
-            //front camera
-            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-front");
-			driveBackwards = false;
-		}else{
-            //back camera
-            limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
-			driveBackwards = true;
-		}
-		limelightTable = NetworkTableInstance.getDefault().getTable("limelight-back");
-		driveBackwards = false;
+		limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
 
 		NetworkTableEntry tv = limelightTable.getEntry("tv");
 		double v = tv.getDouble(0.0);
@@ -500,27 +499,13 @@ public class Drive extends Subsystem {
 			}
 		}
 		
-		if(driveBackwards){
-			double holdRight = right;
-			right = -left;
-			left = -holdRight;
-		}
 		asyncAdHocLogger.q("left: ").q(left).q(" leftLast: ").q(m_leftMotorLevelLast).q(" right: ").q(right).q(" rightLast: ").q(m_rightMotorLevelLast).go();
 		double leftRightRatio = Math.abs(left/right);
-		if(driveBackwards){
-			if((m_leftMotorLevelLast - left)>Constants.kVisionMotorLevelAccMax){
-				left = m_leftMotorLevelLast - (Constants.kVisionMotorLevelAccMax * leftRightRatio);
-			}
-			if((m_rightMotorLevelLast - right)>Constants.kVisionMotorLevelAccMax){
-				right = m_rightMotorLevelLast - (Constants.kVisionMotorLevelAccMax / leftRightRatio);
-			}
-		}else{
-			if((left - m_leftMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
-				left = m_leftMotorLevelLast + (Constants.kVisionMotorLevelAccMax * leftRightRatio);
-			}
-			if((right - m_rightMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
-				right = m_rightMotorLevelLast + (Constants.kVisionMotorLevelAccMax / leftRightRatio);
-			}
+		if((left - m_leftMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
+			left = m_leftMotorLevelLast + (Constants.kVisionMotorLevelAccMax * leftRightRatio);
+		}
+		if((right - m_rightMotorLevelLast)>Constants.kVisionMotorLevelAccMax){
+			right = m_rightMotorLevelLast + (Constants.kVisionMotorLevelAccMax / leftRightRatio);
 		}
 
 		setMotorLevels(left, -right);

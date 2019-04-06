@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -75,10 +76,8 @@ public class Robot extends TimedRobot {
 	}
 	
 	public static void setVisionPipeline(int pipeline){
-		//NetworkTable ll0 = NetworkTableInstance.getDefault().getTable("limelight-front");
-		NetworkTable ll1 = NetworkTableInstance.getDefault().getTable("limelight-back");
-		//ll0.getEntry("pipeline").forceSetNumber(pipeline);
-		ll1.getEntry("pipeline").forceSetNumber(pipeline);
+		NetworkTable ll = NetworkTableInstance.getDefault().getTable("limelight");
+		ll.getEntry("pipeline").forceSetNumber(pipeline);
 	}
 	/**
 	 * Constructor
@@ -130,7 +129,7 @@ public class Robot extends TimedRobot {
 			m_pathManager.savePaths();
 			
 			
-		    //CameraServer.getInstance().startAutomaticCapture();
+		    CameraServer.getInstance().startAutomaticCapture();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"robotInit");
 			if ( m_robotInit_loggedError == false ) {
