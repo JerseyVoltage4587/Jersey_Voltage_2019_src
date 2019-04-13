@@ -125,8 +125,10 @@ public class Constants{
     public static final double kArmDegTolerance = 5.0;
     public static final double kArmDegSafeHatch = 10.0;
     public static final double kArmHoldBallDeg = 20.0;
-    public static final double kArmIntakeBallDeg = 107.0;
+    public static final double kArmIntakeBallDeg = 105.0;
     public static final double kArmCargoShipDeg = 45.0;
+
+    public static final double kArmMaxMotor = 0.5;
 
     public static final double kArmIntakeDeg = -183.5;
     public static final double kArmClimbDeg = 0.0;
@@ -158,10 +160,10 @@ public class Constants{
     public static final double kPathHoldKp = 0.0005;
     public static final double kPathHoldKg = 0.0001;
     
-    public static final double kArmHoldKp = 0.005;
+    public static final double kArmHoldKp = 0.035;
     public static final double kArmHoldKi = 0.0;
     public static final double kArmHoldKd = 0.0;
-    public static final double kArmHoldPower = 0.1;//0.35
+    public static final double kArmHoldPower = 0.2;//0.35
 
     public static final double kTestVelTarget = 1700;
     public static final double kTestDistTarget = 50000;

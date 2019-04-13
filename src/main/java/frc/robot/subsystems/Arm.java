@@ -40,6 +40,8 @@ public class Arm extends Subsystem {
 	public void setHoldArmForDefense(boolean x){
 		m_holdArmForDefense = x;
 	}
+	
+	private boolean doNonManual = false;
     
     int iCall = 0;
     private final Loop mLoop = new Loop() {
@@ -66,8 +68,9 @@ public class Arm extends Subsystem {
         		mIsAtSetpoints = true;
         	}else{
         		mIsAtSetpoints = false;
-        	}*/
+			}*/
             synchronized (Arm.class) {
+				if(mArmSetpoint != xArmSetpoint){doNonManual = true;}
             	xArmPos = mArmPos;
         		xIsAtSetpoints = mIsAtSetpoints;
             	mArmSetpoint = xArmSetpoint;
@@ -86,7 +89,16 @@ public class Arm extends Subsystem {
 				}
 			}
 
-			doPathFollowing();
+			double motorLevel = OI.getInstance().getDrive2();
+			if(Math.abs(motorLevel) >= 0.1){
+				armMotor.set(motorLevel);
+				doNonManual = false;
+			}
+			if(doNonManual == true){
+				doPathFollowing();
+			}else{
+				armMotor.set(motorLevel);
+			}
 			/*if(backStop.get() == false){
 				if(motorLevel <= 0){
 					//motorLevel = 0;
@@ -130,7 +142,7 @@ public class Arm extends Subsystem {
     	double error = mArmSetpoint - mArmPos;
     	double arm_motor_level;
     	//double armRealPos = mArmPos + 12;
-		if (error>40.0){
+		/*if (error>40.0){
 			slowDown = false;
 			arm_motor_level = Constants.kArmMaxMotorUp;
 			arm_motor_level -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
@@ -155,7 +167,8 @@ public class Arm extends Subsystem {
 		if(slowDown){
 			arm_motor_level = getArmPIDOutput(mArmSetpoint);
 			arm_motor_level -= 3*Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
-		}
+		}*/
+		arm_motor_level = getArmPIDOutput(mArmSetpoint);
 
 		/*if(mArmSetpoint > 45 && frontStop.get() == false){
 			//at front stop
@@ -259,12 +272,11 @@ public class Arm extends Subsystem {
     private double getArmPIDOutput(double setpoint_to_use){
     	double error = setpoint_to_use - mArmPos;
     	double output = error * Constants.kArmHoldKp + Math.min(error, mLastArmError) * Constants.kArmHoldKi - (error - mLastArmError) * Constants.kArmHoldKd;
-		if(output>=0){//TODO should use error instead of output, output might flip signs erratically
-			output -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
-		}else{
-			output += Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
-		}
+		output -= Math.sin(mArmPos*Math.PI/180.0)*Constants.kArmHoldPower;
 		mLastArmError = error;
+		if(output >= Constants.kArmMaxMotor){
+			output = Constants.kArmMaxMotor;
+		}
 		return output;
     }
     
