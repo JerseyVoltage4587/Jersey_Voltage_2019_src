@@ -7,6 +7,7 @@ import java.util.Enumeration;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class VisionMath {
 
@@ -63,6 +64,7 @@ public class VisionMath {
             - (Math.sin(ty)*Math.cos(tx)*Math.sin(cameraRotation))
             );
 
+        SmartDashboard.putNumber("visionR", r);
         double xCam = r * (
             (Math.sin(ty)*Math.cos(tx)*Math.cos(cameraRotation))
             +(Math.cos(ty)*Math.sin(cameraRotation))
@@ -71,6 +73,7 @@ public class VisionMath {
         double yCam = r * (Math.sin(ty)*Math.sin(tx));
 
         m_g = Gyro.getYaw();
+        double m_hdg = m_g;
         switch(m_scoringZone){
             case CARGO_FRONT:
                 //no change, 0 degrees
@@ -120,9 +123,14 @@ public class VisionMath {
                 break;
         }
         m_g *= (Math.PI/180.0);//convert to radians for trig functions
-        //m_yRobot = (xCam * Math.sin(m_g)) + (yCam * Math.cos(m_g));
-        //m_xRobot = (xCam * Math.cos(m_g)) - (yCam * Math.sin(m_g));
-        m_yRobot = yCam;
-        m_xRobot = xCam;
+        m_yRobot = (xCam * Math.sin(Constants.kCameraYaw)) + (yCam * Math.cos(Constants.kCameraYaw));
+        m_xRobot = (xCam * Math.cos(Constants.kCameraYaw)) - (yCam * Math.sin(Constants.kCameraYaw));
+        m_yRobot -= Constants.kCamToCenter;
+        m_xRobot += Constants.kCamToFront;
+        
+        //m_yRobot += (Constants.kCamToFront * Math.sin(m_hdg)) + (Constants.kCamToCenter * Math.cos(m_hdg));
+        //m_xRobot += (Constants.kCamToFront * Math.cos(m_hdg)) + (Constants.kCamToCenter * Math.sin(m_hdg));
+        //m_yRobot = yCam;
+        //m_xRobot = xCam;
     }
 }

@@ -11,8 +11,8 @@ public class Constants{
     public static double kSensorUnitsPerRotation = 4096;
     
     public static double kStepSizeSeconds = 0.01;
-    public static double kMaxFeetPerSecond = 10.0;
-    public static double kMaxAcceleration = 5;//15.0;
+    public static double kMaxFeetPerSecond = 9.0;
+    public static double kMaxAcceleration = 7.0;//15.0;
     public static double kMaxJerk = 40.0;
     public static double kWheelBaseFeet = 29.0 / 12.0;//25.75
     
@@ -23,8 +23,9 @@ public class Constants{
     public static final double kInchesPerVisionY = 4.273662947; // VisionY = 27 - (limelight ty output)
     public static final double kDegPerVisionX = 0.971;
     public static final double kVisionDistToMotor = 0.03;
-    public static final double kVisionXToMotor = 0.015;//0.015
-    public static final double kVisionDistToStop = 22.0;//inches
+    public static final double kVisionXToMotor = 0.015;
+    public static final double kVisionDistToStop = 1.0;//inches
+    public static final double kVisionToleranceToStop = 3.0;
     public static final double kVisionFullArea = 10.0;
     public static final double kVisionMinMotorLevel = 0.0;
     public static final double kVisionMotorLevelAccMax = 0.015;//max motor change in 10ms
@@ -40,11 +41,14 @@ public class Constants{
     public static final double kVisionLargestApproachAngle = 10*Math.PI/180.0;//radians
     public static final double kVisionAngleHdgTolerance = 4*Math.PI/180.0;//radians
 
-    public static final double kVisionXTolerance = 1.5;
+    public static final double kVisionXTolerance = 2.5;
     public static final double kVisionYTolerance = 3.5;
 
-    public static final double kZRobotInches = 8.0;
-    public static final double kCameraRotation = 0 * (Math.PI / 180.0);
+    public static final double kZRobotInches = -17.0;
+    public static final double kCameraRotation = -26 * (Math.PI / 180.0);
+    public static final double kCameraYaw = -20 * (Math.PI / 180.0);
+    public static final double kCamToFront = 18;
+    public static final double kCamToCenter = 11;
 
     public static final double kTurnToAngleKp = 0.04;
     public static final double kTurnToAngleKd = 0.05;
@@ -153,7 +157,7 @@ public class Constants{
     public static final double kSimpleArcTolerance = 10.0;
 
     public static final double kPathFollowKa = 0;//0.065;
-    public static final double kPathFollowKv = 0.0045;
+    public static final double kPathFollowKv = 0.0055;
     public static final double kPathFollowKp = 0.00025;
     public static final double kPathFollowKg = 0.01;
 

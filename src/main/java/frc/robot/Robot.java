@@ -19,6 +19,8 @@ import java.util.Arrays;
 
 import frc.robot.commands.AutoTest;
 import frc.robot.commands.DriveDist;
+import frc.robot.commands.FollowPath;
+import frc.robot.commands.Hab2Left2Hatch;
 import frc.robot.commands.TurnToAngle;
 import frc.robot.loops.Looper;
 import frc.robot.subsystems.Arm;
@@ -106,10 +108,10 @@ public class Robot extends TimedRobot {
 			mEnabledLooper = new Looper();
 			mSubsystemManager = new SubsystemManager(Arrays.asList(
 														Drive.getInstance()
-														,Arm.getInstance()
-														,Climb.getInstance()
-														,Lift.getInstance()
-														,Intake.getInstance()
+														//,Arm.getInstance()
+														//,Climb.getInstance()
+														//,Lift.getInstance()
+														//,Intake.getInstance()
 														));
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
@@ -122,6 +124,34 @@ public class Robot extends TimedRobot {
 			//Robot.getDrive().setVisionPath();
 			//CalcPathToTarget calcPathToTarget = new CalcPathToTarget();
 			//calcPathToTarget.calcPath(0.0);
+			
+			JVPathCreator pc = new JVPathCreator();
+			//hab 2 to left cargo
+			pc.calcDriveStraight(80, 0, 4.5,false);
+			pc.calcArc(52, -35, 4.5, 5.0,false);
+			pc.calcDriveStraight(60.0, 5.0, 6.5,false);
+			pc.calcArc(52, 125, 6.5, 4,false);
+			//vision place
+			pc.writePathToFile("hab2ToLeftNearCargo");
+
+			JVPathCreator pc1 = new JVPathCreator();
+			//left cargo to loading
+			pc1.calcArc(45, -60, 0, 0,true);//this needs to go backwards
+			pc1.calcArc(104.5, 73, 0, 7.5,false);
+			pc1.calcDriveStraight(65.0, 7.5, 6.0,false);
+			pc1.calcArc(104.5, -40, 6.0, 2,false);
+			//vision pickup
+			pc1.writePathToFile("leftNearCargoToLoading");
+
+			JVPathCreator pc2 = new JVPathCreator();
+			//loading to left cargo
+			pc2.calcDriveStraight(90, 0, 6,true);//backwards
+			pc2.calcArc(52,-22,6,6,true);
+			pc2.calcDriveStraight(138, 6, 5.5, true);
+			pc2.calcArc(36, 112, 5.5, 0, true);
+			pc2.writePathToFile("loadingToLeftMiddleCargo");
+
+
 
 			m_pathManager = new PathManager();
 			//comment this so the robot doesn't write paths every power cycle
@@ -129,7 +159,7 @@ public class Robot extends TimedRobot {
 			m_pathManager.savePaths();
 			
 			
-		    CameraServer.getInstance().startAutomaticCapture();
+		    //CameraServer.getInstance().startAutomaticCapture();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"robotInit");
 			if ( m_robotInit_loggedError == false ) {
@@ -185,7 +215,8 @@ public class Robot extends TimedRobot {
 			double yRobot = vm.getRobotY();
 			SmartDashboard.putNumber("xRobot", xRobot);
 			SmartDashboard.putNumber("yRobot", yRobot);
-			setVisionPipeline(1);
+			SmartDashboard.putNumber("visionAngle", Math.atan(yRobot/xRobot)*(180.0/Math.PI));
+			//setVisionPipeline(1);
 
 			allPeriodic();
 		} catch (Throwable t) {
@@ -233,7 +264,9 @@ public class Robot extends TimedRobot {
 			//Command autonomousCommand = new AutoTest();
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
-			//autonomousCommand.start();
+			//Command autonomousCommand = new FollowPath(Robot.getPathManager().getTrajMap().get("leftNearCargoToLoadingLeft"), Robot.getPathManager().getTrajMap().get("leftNearCargoToLoadingRight"));
+			Command autonomousCommand = new Hab2Left2Hatch();
+			autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");

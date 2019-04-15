@@ -360,6 +360,8 @@ public class Drive extends Subsystem {
 		vm.findRobotPos();
 		double xRobot = vm.getRobotX();
 		double yRobot = vm.getRobotY();
+		x = Math.atan(yRobot/xRobot)*180.0/Math.PI;
+		SmartDashboard.putNumber("visionAngle",x);
 		double distRobot = Math.sqrt((xRobot*xRobot)+(yRobot*yRobot));
 		distRobot -= Constants.kVisionDistToStop;
 		if(xRobot < 900 && yRobot < 900){
@@ -379,8 +381,10 @@ public class Drive extends Subsystem {
 		double left = 0;
 		double right = 0;
 
-		left = OI.getInstance().getDrive()*0.5 + (angleError * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) + (angleError * Constants.kVisionXToMotor);
-		right = OI.getInstance().getDrive()*0.5 - (angleError * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) - (angleError * Constants.kVisionXToMotor);
+		left = (distRobot * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);//OI.getInstance().getDrive()*0.5 + (angleError * Constants.kVisionXToMotor);
+		right = (distRobot * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) - (angleError * Constants.kVisionXToMotor);
+		left*=0.75;
+		right*=0.75;
 		if(Math.abs(left)<Constants.kVisionMinMotorLevel && Math.abs(right) < Constants.kVisionMinMotorLevel){
 			left = Constants.kVisionMinMotorLevel * Math.signum(left);
 			right = Constants.kVisionMinMotorLevel * Math.signum(right);
@@ -390,17 +394,32 @@ public class Drive extends Subsystem {
 			boolean done = false;
 			if(v == 0.0){
 				double deltaDist = (getLeftEnc() - m_leftEncoderLast) * Constants.kInchesPerTic;
-				if(Math.abs(deltaDist) < 0.01){notMovingCount++;}
+				if(Math.abs(deltaDist) < 0.1){
+					notMovingCount++;
+				}else{
+					notMovingCount = 0;
+				}
 				distMoved += deltaDist;
 				asyncAdHocLogger.q("distMoved: ").q(distMoved).q(" lastDesiredDist: ").q(lastDesiredDist).go();
-				if(distMoved >= (lastDesiredDist - Constants.kVisionDistToStop)){
+				if(distMoved >= (lastDesiredDist - Constants.kVisionToleranceToStop)){
 					done = true;
 				}
 				if(notMovingCount>5){
 					done = true;
 				}
 			}else{
-				if(Math.abs(xRobot) <= Constants.kVisionDistToStop){
+				double deltaDist = (getLeftEnc() - m_leftEncoderLast) * Constants.kInchesPerTic;
+				SmartDashboard.putNumber("deltaDist",deltaDist);
+				SmartDashboard.putNumber("notMovingCt",notMovingCount);
+				if(Math.abs(deltaDist) < 0.1){
+					notMovingCount++;
+				}else{
+					notMovingCount = 0;
+				}
+				if(notMovingCount>5){
+					done = true;
+				}
+				if(Math.abs(xRobot) <= Constants.kVisionToleranceToStop){
 					done = true;
 				}
 			}
