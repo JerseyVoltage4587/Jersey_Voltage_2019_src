@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class VisionMath {
 
     private double zRobot = Constants.kZRobotInches;
-    private double cameraRotation = Constants.kCameraRotation;
+    //private double cameraRotation = Constants.kCameraRotation;
 
     private double m_xRobot,m_yRobot;
     public double getRobotX(){
@@ -41,6 +41,12 @@ public class VisionMath {
     }
 
     public void findRobotPos(){
+        
+        double cameraYaw = SmartDashboard.getNumber("kCameraYaw", Constants.kCameraYaw) * (Math.PI/180.0);
+        double cameraTilt = SmartDashboard.getNumber("kCameraTilt", Constants.kCameraRotation) * (Math.PI/180.0);
+        double cameraToCenter = SmartDashboard.getNumber("kCameraToCenter", Constants.kCamToCenter);
+        double cameraToFront = SmartDashboard.getNumber("kCameraToFront", Constants.kCamToFront);
+
         NetworkTable limelightTable;
         limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
         NetworkTableEntry tve = limelightTable.getEntry("tv");
@@ -60,14 +66,14 @@ public class VisionMath {
         ty *= (Math.PI/180.0);
         
         double r = zRobot / (
-            (Math.cos(ty)*Math.cos(cameraRotation))
-            - (Math.sin(ty)*Math.cos(tx)*Math.sin(cameraRotation))
+            (Math.cos(ty)*Math.cos(cameraTilt))
+            - (Math.sin(ty)*Math.cos(tx)*Math.sin(cameraTilt))
             );
 
         SmartDashboard.putNumber("visionR", r);
         double xCam = r * (
-            (Math.sin(ty)*Math.cos(tx)*Math.cos(cameraRotation))
-            +(Math.cos(ty)*Math.sin(cameraRotation))
+            (Math.sin(ty)*Math.cos(tx)*Math.cos(cameraTilt))
+            +(Math.cos(ty)*Math.sin(cameraTilt))
         );
 
         double yCam = r * (Math.sin(ty)*Math.sin(tx));
@@ -123,10 +129,10 @@ public class VisionMath {
                 break;
         }
         m_g *= (Math.PI/180.0);//convert to radians for trig functions
-        m_yRobot = (xCam * Math.sin(Constants.kCameraYaw)) + (yCam * Math.cos(Constants.kCameraYaw));
-        m_xRobot = (xCam * Math.cos(Constants.kCameraYaw)) - (yCam * Math.sin(Constants.kCameraYaw));
-        m_yRobot -= Constants.kCamToCenter;
-        m_xRobot += Constants.kCamToFront;
+        m_yRobot = (xCam * Math.sin(cameraYaw)) + (yCam * Math.cos(cameraYaw));
+        m_xRobot = (xCam * Math.cos(cameraYaw)) - (yCam * Math.sin(cameraYaw));
+        m_yRobot -= cameraToCenter;
+        m_xRobot += cameraToFront;
         
         //m_yRobot += (Constants.kCamToFront * Math.sin(m_hdg)) + (Constants.kCamToCenter * Math.cos(m_hdg));
         //m_xRobot += (Constants.kCamToFront * Math.cos(m_hdg)) + (Constants.kCamToCenter * Math.sin(m_hdg));

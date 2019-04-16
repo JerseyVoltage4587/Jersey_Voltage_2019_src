@@ -239,7 +239,8 @@ public class Drive extends Subsystem {
 	public void startVisionDrive() {
     	//System.out.println("in startVisionDrive");
     	synchronized (Drive.this) {
-    		mDriveControlState = DriveControlState.VISION_DRIVE;
+			mDriveControlState = DriveControlState.VISION_DRIVE;
+			notMovingCount = -999;
     	}
 	}
 
@@ -333,8 +334,7 @@ public class Drive extends Subsystem {
                     break;
                 }
 			}
-			m_leftEncoderLast = getLeftEnc();
-			m_rightEncoderLast = getRightEnc();
+			
 			m_lastTime = System.nanoTime();
         	logValues();
         }
@@ -369,7 +369,9 @@ public class Drive extends Subsystem {
 			lastDesiredDist = distRobot;
 			lastDesiredHdg = Gyro.getYaw() - x;
 			distMoved = 0;
-			notMovingCount = 0;
+			//notMovingCount = 0;
+			m_leftEncoderLast = getLeftEnc();
+			m_rightEncoderLast = getRightEnc();
 		}else{
 			//don't have pic
 			x=0;
@@ -381,8 +383,8 @@ public class Drive extends Subsystem {
 		double left = 0;
 		double right = 0;
 
-		left = (distRobot * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);//OI.getInstance().getDrive()*0.5 + (angleError * Constants.kVisionXToMotor);
-		right = (distRobot * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);//(distRobot * Constants.kVisionDistToMotor) - (angleError * Constants.kVisionXToMotor);
+		left = (distRobot * Constants.kVisionDistToMotor) + (x * Constants.kVisionXToMotor);// * (distRobot / Constants.kVisionDistFullTurn));//OI.getInstance().getDrive()*0.5 + (angleError * Constants.kVisionXToMotor);
+		right = (distRobot * Constants.kVisionDistToMotor) - (x * Constants.kVisionXToMotor);// * (distRobot / Constants.kVisionDistFullTurn));//(distRobot * Constants.kVisionDistToMotor) - (angleError * Constants.kVisionXToMotor);
 		left*=0.75;
 		right*=0.75;
 		if(Math.abs(left)<Constants.kVisionMinMotorLevel && Math.abs(right) < Constants.kVisionMinMotorLevel){
@@ -390,6 +392,31 @@ public class Drive extends Subsystem {
 			right = Constants.kVisionMinMotorLevel * Math.signum(right);
 		}
 
+		if(Math.abs(yRobot) < Constants.kVisionYTolerance){
+			boolean done = false;
+			if(Math.abs(getLeftVel()) < 100 && Math.abs(getRightVel()) < 100){
+				notMovingCount++;
+			}else{
+				notMovingCount = 0;
+			}
+			
+			if(notMovingCount>5){
+				done = true;
+			}
+			if(Math.abs(xRobot) <= Constants.kVisionToleranceToStop){
+				done = true;
+			}
+			
+			if(done){
+				setOpenLoop(DriveSignal.NEUTRAL);
+				left=0;
+				right=0;
+				limelightTable.getEntry("ledMode").forceSetNumber(2);
+					
+				m_timer.schedule(new FlashTimer(),2000);
+			}
+		}
+		/*
 		if(Math.abs(x) < Constants.kVisionXTolerance){
 			boolean done = false;
 			if(v == 0.0){
@@ -432,6 +459,7 @@ public class Drive extends Subsystem {
 				m_timer.schedule(new FlashTimer(),2000);
 			}
 		}
+		*/
 		
 		asyncAdHocLogger.q("left: ").q(left).q(" leftLast: ").q(m_leftMotorLevelLast).q(" right: ").q(right).q(" rightLast: ").q(m_rightMotorLevelLast).go();
 		double leftRightRatio = Math.abs(left/right);
@@ -855,6 +883,8 @@ public class Drive extends Subsystem {
         SmartDashboard.putNumber("left position (rotations)", mLeftMaster.getSelectedSensorPosition(0));///4096);
         SmartDashboard.putNumber("right position (rotations)", mRightMaster.getSelectedSensorPosition(0));///4096);
 		SmartDashboard.putNumber("gyro pos", Gyro.getYaw());
+		SmartDashboard.putNumber("left vel", mLeftMaster.getSelectedSensorVelocity());
+		SmartDashboard.putNumber("right vel", mRightMaster.getSelectedSensorVelocity());
     }
     
     public static class DebugOutput{

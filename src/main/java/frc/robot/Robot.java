@@ -124,6 +124,10 @@ public class Robot extends TimedRobot {
 			//Robot.getDrive().setVisionPath();
 			//CalcPathToTarget calcPathToTarget = new CalcPathToTarget();
 			//calcPathToTarget.calcPath(0.0);
+			SmartDashboard.putNumber("kCameraYaw", Constants.kCameraYaw);
+        	SmartDashboard.putNumber("kCameraTilt", Constants.kCameraRotation);
+        	SmartDashboard.putNumber("kCameraToCenter", Constants.kCamToCenter);
+       		SmartDashboard.putNumber("kCameraToFront", Constants.kCamToFront);
 			
 			JVPathCreator pc = new JVPathCreator();
 			//hab 2 to left cargo

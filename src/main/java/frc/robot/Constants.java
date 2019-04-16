@@ -22,8 +22,8 @@ public class Constants{
 
     public static final double kInchesPerVisionY = 4.273662947; // VisionY = 27 - (limelight ty output)
     public static final double kDegPerVisionX = 0.971;
-    public static final double kVisionDistToMotor = 0.03;
-    public static final double kVisionXToMotor = 0.015;
+    public static final double kVisionDistToMotor = 0.015;//0.03
+    public static final double kVisionXToMotor = 0.005;
     public static final double kVisionDistToStop = 1.0;//inches
     public static final double kVisionToleranceToStop = 3.0;
     public static final double kVisionFullArea = 10.0;
@@ -44,11 +44,13 @@ public class Constants{
     public static final double kVisionXTolerance = 2.5;
     public static final double kVisionYTolerance = 3.5;
 
+    public static final double kVisionDistFullTurn = 72;//inches
+
     public static final double kZRobotInches = -17.0;
-    public static final double kCameraRotation = -26 * (Math.PI / 180.0);
-    public static final double kCameraYaw = -20 * (Math.PI / 180.0);
+    public static final double kCameraRotation = -23;// * (Math.PI / 180.0);
+    public static final double kCameraYaw = -20;// * (Math.PI / 180.0);
     public static final double kCamToFront = 18;
-    public static final double kCamToCenter = 11;
+    public static final double kCamToCenter = 12;
 
     public static final double kTurnToAngleKp = 0.04;
     public static final double kTurnToAngleKd = 0.05;
