@@ -171,6 +171,10 @@ public class OI {
 	public double getDrive2(){
 		return 0.25 * stick2.getRawAxis(1);
 	}
+
+	public double getIntake(){
+		return stick1.getRawAxis(2);
+	}
 	
 	public int getPOV() {
 		return stick1.getPOV();

@@ -157,7 +157,7 @@ public class Lift extends Subsystem {
 					Robot.getArm().setArmSetpoint(Constants.kArmHoldBallDeg);
 				}
 				if(setpoint == Constants.kLiftCargoShip){
-					Robot.getArm().setArmSetpoint(Constants.kArmCargoShipDeg);
+					Robot.getArm().setArmSetpoint(Constants.kArmCargoShipDeg+30);
 				}
 			}
     	}

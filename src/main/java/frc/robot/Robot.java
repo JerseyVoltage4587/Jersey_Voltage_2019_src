@@ -108,10 +108,10 @@ public class Robot extends TimedRobot {
 			mEnabledLooper = new Looper();
 			mSubsystemManager = new SubsystemManager(Arrays.asList(
 														Drive.getInstance()
-														//,Arm.getInstance()
-														//,Climb.getInstance()
-														//,Lift.getInstance()
-														//,Intake.getInstance()
+														,Arm.getInstance()
+														,Climb.getInstance()
+														,Lift.getInstance()
+														,Intake.getInstance()
 														));
 		    mSubsystemManager.registerEnabledLoops(mEnabledLooper);
 			// Initialize the Operator Interface
@@ -129,7 +129,7 @@ public class Robot extends TimedRobot {
         	SmartDashboard.putNumber("kCameraToCenter", Constants.kCamToCenter);
        		SmartDashboard.putNumber("kCameraToFront", Constants.kCamToFront);
 			
-			JVPathCreator pc = new JVPathCreator();
+			/*JVPathCreator pc = new JVPathCreator();
 			//hab 2 to left cargo
 			pc.calcDriveStraight(80, 0, 4.5,false);
 			pc.calcArc(52, -35, 4.5, 5.0,false);
@@ -154,7 +154,7 @@ public class Robot extends TimedRobot {
 			pc2.calcDriveStraight(138, 6, 5.5, true);
 			pc2.calcArc(36, 112, 5.5, 0, true);
 			pc2.writePathToFile("loadingToLeftMiddleCargo");
-
+			*/
 
 
 			m_pathManager = new PathManager();
@@ -163,7 +163,7 @@ public class Robot extends TimedRobot {
 			m_pathManager.savePaths();
 			
 			
-		    //CameraServer.getInstance().startAutomaticCapture();
+		    CameraServer.getInstance().startAutomaticCapture();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"robotInit");
 			if ( m_robotInit_loggedError == false ) {
@@ -269,8 +269,8 @@ public class Robot extends TimedRobot {
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
 			//Command autonomousCommand = new FollowPath(Robot.getPathManager().getTrajMap().get("leftNearCargoToLoadingLeft"), Robot.getPathManager().getTrajMap().get("leftNearCargoToLoadingRight"));
-			Command autonomousCommand = new Hab2Left2Hatch();
-			autonomousCommand.start();
+			//Command autonomousCommand = new Hab2Left2Hatch();
+			//autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");

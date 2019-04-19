@@ -166,7 +166,7 @@ public class Intake extends Subsystem {
 					m_hasHatch = false;
                     break;
 				case INTAKE_BALL:
-					mIntakeTalon.set(-0.7);
+					mIntakeTalon.set(-1.0);
 					mHatchTalon.set(0.0);
 					pokeIn();
 					openFingers();
@@ -200,7 +200,11 @@ public class Intake extends Subsystem {
 					m_hasHatch = false;
 					break;
 				case SHOOT_BALL:
-					mIntakeTalon.set(0.35);
+					double motor = OI.getInstance().getIntake();
+					if(Robot.getLift().getLiftSetpoint()== Constants.kLiftCargoShip){
+						motor *= 0.5;
+					}
+					mIntakeTalon.set(motor);
 					mHatchTalon.set(0.0);
 					/*if(Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket1
 						||Robot.getLift().getLiftSetpoint() == Constants.kLiftBallRocket2

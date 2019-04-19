@@ -196,8 +196,8 @@ public class Arm extends Subsystem {
     	}
     }
     
-    private double mArmSetpoint=0;
-    private double xArmSetpoint=0;
+    private double mArmSetpoint=Constants.kArmSoftStopLow;
+    private double xArmSetpoint=Constants.kArmSoftStopLow;
     public void setArmSetpoint(double setpoint){
     	synchronized (Arm.class){
 			xArmSetpoint = setpoint;
