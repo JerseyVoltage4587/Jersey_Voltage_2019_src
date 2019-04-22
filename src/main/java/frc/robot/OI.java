@@ -25,6 +25,7 @@ import frc.robot.commands.SetCameraMode;
 import frc.robot.commands.StartOpenLoop;
 import frc.robot.commands.StartSimpleVision;
 import frc.robot.commands.SetIntakeState;
+import frc.robot.commands.KillAuto;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.Button;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
@@ -137,6 +138,7 @@ public class OI {
 		rightTrigger1.whenReleased(new SetClimbMotor(0.0));
 		leftStickButton1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
 		rightStickButton1.whenPressed(new SetIntakeState(IntakeControlState.PLACE_HATCH));
+		startButton1.whenPressed(new KillAuto());
 		
 		buttonA2.whenPressed(new ClimbUp());
 		buttonB2.whenPressed(new ClimbHalfOn());

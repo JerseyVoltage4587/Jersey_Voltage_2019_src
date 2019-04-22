@@ -14,6 +14,7 @@ public class StartSimpleVision extends Command {
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
+    if(Robot.getKillAuto()){return;}
     Robot.getDrive().startVisionDrive();
   }
 
@@ -31,7 +32,6 @@ public class StartSimpleVision extends Command {
   // Called once after isFinished returns true
   @Override
   protected void end() {
-    //Robot.getDrive().setOpenLoop(DriveSignal.NEUTRAL);
   }
 
   // Called when another command which requires one or more of the same

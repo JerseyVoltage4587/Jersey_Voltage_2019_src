@@ -81,6 +81,14 @@ public class Robot extends TimedRobot {
 		NetworkTable ll = NetworkTableInstance.getDefault().getTable("limelight");
 		ll.getEntry("pipeline").forceSetNumber(pipeline);
 	}
+	public static void setVisionLEDs(boolean on){
+		NetworkTable ll = NetworkTableInstance.getDefault().getTable("limelight");
+		if(on){
+			ll.getEntry("ledMode").forceSetNumber(0);
+		}else{
+			ll.getEntry("ledMode").forceSetNumber(1);
+		}	
+	}
 	/**
 	 * Constructor
 	 */
@@ -96,6 +104,14 @@ public class Robot extends TimedRobot {
 	private static PathManager m_pathManager;
 	public static PathManager getPathManager() {
 		return m_pathManager;
+	}
+
+	private static boolean m_killAuto = false;
+	public static void setKillAuto(boolean x){
+		m_killAuto = x;
+	}
+	public static boolean getKillAuto(){
+		return m_killAuto;
 	}
 
 	@Override
@@ -129,21 +145,22 @@ public class Robot extends TimedRobot {
         	SmartDashboard.putNumber("kCameraToCenter", Constants.kCamToCenter);
        		SmartDashboard.putNumber("kCameraToFront", Constants.kCamToFront);
 			
-			/*JVPathCreator pc = new JVPathCreator();
+			JVPathCreator pc = new JVPathCreator();
 			//hab 2 to left cargo
 			pc.calcDriveStraight(80, 0, 4.5,false);
-			pc.calcArc(52, -35, 4.5, 5.0,false);
-			pc.calcDriveStraight(60.0, 5.0, 6.5,false);
-			pc.calcArc(52, 125, 6.5, 4,false);
+			pc.calcArc(52, -30, 4.5, 5.0,false);
+			pc.calcDriveStraight(70.0, 5.0, 6.5,false);
+			pc.calcArc(62.5, 120, 6.5, 4,false);
 			//vision place
 			pc.writePathToFile("hab2ToLeftNearCargo");
 
 			JVPathCreator pc1 = new JVPathCreator();
 			//left cargo to loading
-			pc1.calcArc(45, -60, 0, 0,true);//this needs to go backwards
-			pc1.calcArc(104.5, 73, 0, 7.5,false);
+			pc1.calcArc(45, -65, 0, 0,true);//this needs to go backwards
+			pc1.calcArc(106, 73, 0, 7.5,false);
 			pc1.calcDriveStraight(65.0, 7.5, 6.0,false);
-			pc1.calcArc(104.5, -40, 6.0, 2,false);
+			pc1.calcArc(106, -40, 6.0, 3.0,false);
+			//pc1.calcDriveStraight(5.0, 6.0, 3.0,false);
 			//vision pickup
 			pc1.writePathToFile("leftNearCargoToLoading");
 
@@ -154,7 +171,7 @@ public class Robot extends TimedRobot {
 			pc2.calcDriveStraight(138, 6, 5.5, true);
 			pc2.calcArc(36, 112, 5.5, 0, true);
 			pc2.writePathToFile("loadingToLeftMiddleCargo");
-			*/
+			
 
 
 			m_pathManager = new PathManager();
@@ -162,7 +179,7 @@ public class Robot extends TimedRobot {
 			//m_pathManager.writePaths();
 			m_pathManager.savePaths();
 			
-			
+			setVisionLEDs(false);
 		    CameraServer.getInstance().startAutomaticCapture();
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"robotInit");
@@ -269,8 +286,8 @@ public class Robot extends TimedRobot {
 			//Command autonomousCommand = new DriveDist(36);
 			//Command autonomousCommand = new TurnToAngle(50);
 			//Command autonomousCommand = new FollowPath(Robot.getPathManager().getTrajMap().get("leftNearCargoToLoadingLeft"), Robot.getPathManager().getTrajMap().get("leftNearCargoToLoadingRight"));
-			//Command autonomousCommand = new Hab2Left2Hatch();
-			//autonomousCommand.start();
+			Command autonomousCommand = new Hab2Left2Hatch();
+			autonomousCommand.start();
 
 		} catch (Throwable t) {
 			CrashTracker.logThrowableCrash(t,"autonomousInit");
@@ -406,6 +423,7 @@ public class Robot extends TimedRobot {
 	 * It runs all the logging methods, and then runs the WPI scheduler.
 	 */
 	public void allPeriodic() {
+		SmartDashboard.putBoolean("killAuto", m_killAuto);
 		mSubsystemManager.outputToSmartDashboard();
 		mSubsystemManager.writeToLog();
 		mEnabledLooper.outputToSmartDashboard();

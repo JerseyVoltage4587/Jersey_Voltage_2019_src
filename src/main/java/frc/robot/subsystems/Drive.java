@@ -284,6 +284,7 @@ public class Drive extends Subsystem {
             synchronized (Drive.this) {
                 switch (mDriveControlState) {
                 case OPEN_LOOP:
+					Robot.setVisionLEDs(false);
                 	mDrive = OI.getInstance().getDrive();
                 	mTurn = OI.getInstance().getTurn();
                 	_drive.arcadeDrive(mDrive, mTurn, false);//bool = squaredInputs
@@ -292,6 +293,7 @@ public class Drive extends Subsystem {
                     _drive.setSafetyEnabled(true);
                     break;
                 case PATH_FOLLOWING:
+					Robot.setVisionLEDs(true);
 					_drive.setSafetyEnabled(false);
 					doPathFollowing();
                     break;
@@ -300,6 +302,7 @@ public class Drive extends Subsystem {
                 	mDriveControlState = DriveControlState.OPEN_LOOP;
 					break;
 				case SIMPLE_VISION_DRIVE:
+					Robot.setVisionLEDs(true);
 					/*mDrive = OI.getInstance().getDrive();
 					mTurn = OI.getInstance().getTurn();
 					NetworkTable limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
@@ -321,6 +324,7 @@ public class Drive extends Subsystem {
 					break;
 				case VISION_DRIVE:
 					_drive.setSafetyEnabled(false);
+					Robot.setVisionLEDs(true);
 					doVisionDrive();
 					break;
 				case TURN_ANGLE:

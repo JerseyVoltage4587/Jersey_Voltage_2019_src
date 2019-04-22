@@ -28,7 +28,7 @@ public class Constants{
     public static final double kVisionToleranceToStop = 3.0;
     public static final double kVisionFullArea = 10.0;
     public static final double kVisionMinMotorLevel = 0.0;
-    public static final double kVisionMotorLevelAccMax = 0.015;//max motor change in 10ms
+    public static final double kVisionMotorLevelAccMax = 0.025;//max motor change in 10ms
 
     public static final double kVisionXToMotorWeak = 0.02;
     public static final double kVisionXToMotorStrong = 0.04;
@@ -121,7 +121,7 @@ public class Constants{
     public static final double kArmDegreesPerTic = Constants.kArmDegreesPerRev / Constants.kArmTicsPerRev; //-425
     public static final double kArmMaxAmps = 45;
     public static final long kArmTimeSinceHitMax = 1000*1000*1000;
-    public static final double kArmMaxMotorUp = 0.5;
+    public static final double kArmMaxMotorUp = 0.75;
     public static final double kArmMaxMotorDown = -0.5;
     public static final double kArmSlowMotorUp = 0.2;
     public static final double kArmSlowMotorDown = -0.2;
@@ -129,12 +129,12 @@ public class Constants{
     public static final double kArmSoftStopHigh = 120.0;//100
     public static final double kArmSoftStopLow = -15.0;//-100
     public static final double kArmDegTolerance = 5.0;
-    public static final double kArmDegSafeHatch = 10.0;
+    public static final double kArmDegSafeHatch = 30.0;
     public static final double kArmHoldBallDeg = 30.0;
     public static final double kArmIntakeBallDeg = 117.0;
     public static final double kArmCargoShipDeg = 50.0;
 
-    public static final double kArmMaxMotor = 0.5;
+    public static final double kArmMaxMotor = 0.75;
 
     public static final double kArmIntakeDeg = -183.5;
     public static final double kArmClimbDeg = 0.0;

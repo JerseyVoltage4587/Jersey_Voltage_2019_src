@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 
 import edu.wpi.first.wpilibj.command.Command;
+import frc.robot.Robot;
 
 /**
  *
@@ -25,6 +26,7 @@ public class DelayTime extends Command {
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
+        if(Robot.getKillAuto()){return true;}
         return m_delayTime <= (System.nanoTime() - m_startTime);
     }
 

@@ -11,17 +11,20 @@ import edu.wpi.first.wpilibj.command.Command;
 import frc.robot.Robot;
 import frc.robot.subsystems.Intake.IntakeControlState;
 
-public class SetIntakeState extends Command {
+public class SetIntakeStateAuto extends Command {
   IntakeControlState m_state;
-  public SetIntakeState(IntakeControlState state) {
+  public SetIntakeStateAuto(IntakeControlState state) {
     m_state = state;
   }
 
   // Called just before this Command runs the first time
   @Override
   protected void initialize() {
-    
-    Robot.getIntake().setState(m_state);
+    if(Robot.getKillAuto()){
+      return;
+    }else{
+      Robot.getIntake().setState(m_state);
+    }
   }
 
   // Called repeatedly when this Command is scheduled to run
