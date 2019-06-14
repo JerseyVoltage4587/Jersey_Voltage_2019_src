@@ -16,6 +16,8 @@ import frc.robot.commands.ClimbRest;
 import frc.robot.commands.ClimbUp;
 import frc.robot.commands.HoldArmForDefense;
 import frc.robot.commands.ManualArm;
+import frc.robot.commands.PlaceGamepiece;
+import frc.robot.commands.ResetArmIntake;
 import frc.robot.commands.SetClimbMotor;
 import frc.robot.commands.SetArmSetpoint;
 import frc.robot.commands.SetArmIntake;
@@ -106,15 +108,14 @@ public class OI {
 		/*
 		* TRI OFFSEASON CONTROLS
 		*/
-		buttonA1.whenPressed(new SetArmIntake(Constants.kArmSoftStopLow,IntakeControlState.OFF));
+		buttonA1.whenPressed(new ResetArmIntake());
 		leftBumper1.whenPressed(new SetArmIntake(Constants.kArmIntakeBallDeg,IntakeControlState.INTAKE_BALL));
-		leftTrigger1.whenPressed(new SetArmIntake(Constants.kArmHoldBallDeg,IntakeControlState.SHOOT_BALL));
-		leftTrigger1.whenReleased(new SetArmIntake(Constants.kArmSoftStopLow,IntakeControlState.OFF));
+		leftTrigger1.whenPressed(new SetClimbMotor(-0.5));
+		leftTrigger1.whenReleased(new SetClimbMotor(0.0));
 		rightBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
-		rightTrigger1.whenPressed(new SetIntakeState(IntakeControlState.PLACE_HATCH));
-		//possibly change place ball and hatch to one button, then move climb drive to one of the triggers?
-		startButton1.whenPressed(new SetClimbMotor(-0.5));
-		startButton1.whenReleased(new SetClimbMotor(0.0));
+		rightTrigger1.whenPressed(new PlaceGamepiece());
+		rightTrigger1.whenReleased(new ResetArmIntake());
+		
 		//startButton1.whenPressed(new KillAuto()); //dont run auto at TRI???
 		
 		buttonA2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket1));

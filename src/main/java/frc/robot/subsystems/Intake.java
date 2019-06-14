@@ -254,6 +254,8 @@ public class Intake extends Subsystem {
 					mHatchTalon.set(-1.0);
 					openFingers();
 					brakeOff();
+					//offseason code shouldn't need this
+					/*
 					count++;
 					if(count >= 10){
 						//placed hatch
@@ -261,7 +263,7 @@ public class Intake extends Subsystem {
 						setState(IntakeControlState.OFF);
 						flashLEDs();
 					}
-
+					*/
 					break;
                 default:
                     System.out.println("Unexpected climb control state: " + mIntakeControlState);
