@@ -101,33 +101,34 @@ public class OI {
     	count2Button1 	= new JoystickButton(driverStation, 15);
     	count2Button2 	= new JoystickButton(driverStation, 16);
     	count3Button1 	= new JoystickButton(driverStation, 9);
-    	count3Button2 	= new JoystickButton(driverStation, 8);
-    	
-    	//System.out.println("OI start");  println is evil
-    	/*buttonA1.whenPressed(new SetArmSetpoint(-90));
-		buttonB1.whenPressed(new SetArmSetpoint(0));
-		buttonY1.whenPressed(new SetArmSetpoint(90));
-		*///buttonX1.whenPressed(new StartSimpleVision());
+		count3Button2 	= new JoystickButton(driverStation, 8);
 		
-		/*buttonA1.whenPressed(new SetLiftSetpoint(0.0));
-		buttonB1.whenPressed(new SetLiftSetpoint(1.0));
-		buttonY1.whenPressed(new SetLiftSetpoint(4.5));
+		/*
+		* TRI OFFSEASON CONTROLS
 		*/
-		/*buttonA1.whenPressed(new ClimbUp());
-		buttonB1.whenPressed(new ClimbHalfOn());
-		buttonY1.whenPressed(new ClimbRest());
-		*/
-		/*buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
-		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
-		buttonX1.whenPressed(new SetIntakeState(IntakeControlState.HOLD_HATCH));
-		*/
-		/*buttonA1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
-		buttonB1.whenPressed(new SetIntakeState(IntakeControlState.OFF));
-		*/
+		buttonA1.whenPressed(new SetArmIntake(Constants.kArmSoftStopLow,IntakeControlState.OFF));
+		leftBumper1.whenPressed(new SetArmIntake(Constants.kArmIntakeBallDeg,IntakeControlState.INTAKE_BALL));
+		leftTrigger1.whenPressed(new SetArmIntake(Constants.kArmHoldBallDeg,IntakeControlState.SHOOT_BALL));
+		leftTrigger1.whenReleased(new SetArmIntake(Constants.kArmSoftStopLow,IntakeControlState.OFF));
+		rightBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_HATCH));
+		rightTrigger1.whenPressed(new SetIntakeState(IntakeControlState.PLACE_HATCH));
+		//possibly change place ball and hatch to one button, then move climb drive to one of the triggers?
+		startButton1.whenPressed(new SetClimbMotor(-0.5));
+		startButton1.whenReleased(new SetClimbMotor(0.0));
+		//startButton1.whenPressed(new KillAuto()); //dont run auto at TRI???
 		
-		//leftBumper1.whenPressed(new SetIntakeState(IntakeControlState.INTAKE_BALL));
-		//leftTrigger1.whenPressed(new SetIntakeState(IntakeControlState.SHOOT_BALL));
-		//leftTrigger1.whenReleased(new SetIntakeState(IntakeControlState.OFF));
+		buttonA2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket1));
+		buttonB2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket2));
+		buttonY2.whenPressed(new SetLiftSetpoint(Constants.kLiftRocket3));
+		buttonX2.whenPressed(new SetLiftSetpoint(Constants.kLiftCargoShip));
+		rightBumper2.whenPressed(new ClimbUp());
+		rightTrigger2.whenPressed(new ClimbRest());
+		leftBumper2.whenPressed(new ClimbLevel2());
+		leftTrigger2.whenPressed(new ClimbHalfOn());
+
+
+		/*
+		COMPETITON SEASON CONTROLS
 		buttonA1.whenPressed(new SetArmIntake(Constants.kArmSoftStopLow,IntakeControlState.OFF));
 		leftBumper1.whenPressed(new SetArmIntake(Constants.kArmIntakeBallDeg,IntakeControlState.INTAKE_BALL));
 		leftTrigger1.whenPressed(new SetArmIntake(Constants.kArmHoldBallDeg,IntakeControlState.SHOOT_BALL));
@@ -155,7 +156,7 @@ public class OI {
 
 		visionSwitch.whenPressed(new SetVisionPipeline(1));
 		visionSwitch.whenReleased(new SetVisionPipeline(0));
-		
+		*/
 	}
 
 	// Get the value of the "drive" stick.
