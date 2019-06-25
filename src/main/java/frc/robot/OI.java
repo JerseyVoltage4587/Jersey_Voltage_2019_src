@@ -177,7 +177,7 @@ public class OI {
 	}
 
 	public double getIntake(){
-		return stick1.getRawAxis(2);
+		return stick1.getRawAxis(3);
 	}
 	
 	public int getPOV() {
